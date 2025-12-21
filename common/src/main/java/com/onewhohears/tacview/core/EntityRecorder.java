@@ -18,6 +18,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
 
     public final KeyframeValue.UUIDV<E> uuid = registerUUIDValue("uuid", Entity::getUUID);
     public final KeyframeValue.StringV<E> entityType = registerStringValue("entityType", UtilEntity::getEntityTypeId);
+    public final KeyframeValue.StringV<E> name = registerStringValue("name", Entity::getScoreboardName);
 
     public final int recordRate;
 
