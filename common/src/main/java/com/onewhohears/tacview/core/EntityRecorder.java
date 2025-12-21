@@ -34,7 +34,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         this.recordRate = recordRate;
     }
 
-    public void tick() {
+    public void tickRecord() {
         if (entity == null) return;
         long time = getGameTime(entity);
         if (time - prevRecordTime < recordRate) return;
