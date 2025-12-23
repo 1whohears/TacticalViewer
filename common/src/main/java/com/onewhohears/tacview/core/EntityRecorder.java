@@ -27,19 +27,24 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     @Nullable private E entity;
     private long prevRecordTime = 0;
 
+    public K interpolate(long time, float partialTick) {
+
+    }
+
+    public void tickRecord() {
+        if (entity == null) return;
+        if (!shouldRecord(entity)) return;
+        long time = getGameTime(entity);
+        if (time - prevRecordTime < recordRate) return;
+        keyframes.add(newKeyFrame(entity));
+        prevRecordTime = time;
+    }
+
     public EntityRecorder(@NotNull E entity, int recordRate) {
         super(entity);
         this.entity = entity;
         if (recordRate < 1) recordRate = 1;
         this.recordRate = recordRate;
-    }
-
-    public void tickRecord() {
-        if (entity == null) return;
-        long time = getGameTime(entity);
-        if (time - prevRecordTime < recordRate) return;
-        keyframes.add(newKeyFrame(entity));
-        prevRecordTime = time;
     }
 
     public EntityRecorder(@NotNull JsonObject data) {
@@ -72,5 +77,6 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     @Nullable
     protected abstract K readKeyframe(@NotNull JsonObject keyframe);
     protected abstract K newKeyFrame(@NotNull E entity);
+    protected abstract boolean shouldRecord(@NotNull E entity);
 
 }

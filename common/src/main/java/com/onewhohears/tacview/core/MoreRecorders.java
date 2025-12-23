@@ -15,6 +15,10 @@ public class MoreRecorders {
         public AbstractLivingRec(@NotNull JsonObject data) {
             super(data);
         }
+        @Override
+        protected boolean shouldRecord(@NotNull LivingEntity entity) {
+            return entity.getHealth() > 0;
+        }
     }
     public static class LivingRec extends AbstractLivingRec<EntityKeyframe<LivingEntity>, LivingEntity> {
         public LivingRec(@NotNull LivingEntity entity, int recordRate) {
