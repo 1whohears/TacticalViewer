@@ -1,4 +1,4 @@
-package com.onewhohears.tacview.core;
+package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilEntity;
@@ -16,20 +16,16 @@ import java.util.function.Function;
  */
 public class EntityKeyframe<E extends Entity> {
 
-    private final Map<String, KeyframeValue<?,E>> values = new HashMap<>();
+    public final Map<String, KeyframeValue<Object,E>> values = new HashMap<>();
 
-    public final long tick;
     public final KeyframeValue.Vec3V<E> pos = registerVec3Value("pos", Entity::position);
     public final KeyframeValue.Vec3V<E> vel = registerVec3Value("vel", Entity::getDeltaMovement);
     public final KeyframeValue.FloatV<E> xRot = registerFloatValue("xRot", Entity::getXRot);
     public final KeyframeValue.FloatV<E> yRot = registerFloatValue("yRot", Entity::getYRot);
+    public final KeyframeValue.StringV<E> vehicleUUID = registerStringValue("vehicleUUID",
+            entity -> entity.isPassenger() ? entity.getRootVehicle().getStringUUID() : "");
 
-    public float calcPartial(EntityKeyframe end, long gameTime, float partialTick) {
-        if (gameTime < tick) return 0;
-        else if (gameTime >= end.tick) return 1;
-        long length = end.tick - tick;
-        return (gameTime - tick + partialTick) / length;
-    }
+    protected long tick;
 
     public EntityKeyframe(@NotNull E entity) {
         tick = getGameTime(entity);
@@ -39,6 +35,18 @@ public class EntityKeyframe<E extends Entity> {
     public EntityKeyframe(@NotNull JsonObject data) {
         tick = !data.has("tick") ? 0 : data.get("tick").getAsLong();
         values.forEach((name, value) -> value.readFromData(data));
+    }
+
+    protected EntityKeyframe() {
+    }
+
+    public static <K extends EntityKeyframe<E>, E extends Entity> void setToLerp(
+            K lerpKeyframe, K start, K end, long gameTime, float partialTick) {
+        float partial = calcPartial(start.tick, end.tick, gameTime, partialTick);
+        lerpKeyframe.tick = gameTime;
+        lerpKeyframe.values.forEach((name, value) ->
+                value.setToLerp(start.values.get(name).get(), end.values.get(name).get(), partial)
+        );
     }
 
     public final @NotNull JsonObject getSaveData() {
@@ -53,7 +61,7 @@ public class EntityKeyframe<E extends Entity> {
     }
 
     protected <K extends KeyframeValue<?,E>> K registerValue(K value) {
-        values.put(value.name, value);
+        values.put(value.name, (KeyframeValue<Object, E>) value);
         return value;
     }
 
@@ -81,8 +89,23 @@ public class EntityKeyframe<E extends Entity> {
         return registerValue(new KeyframeValue.StringV<>(name, entityReader));
     }
 
+    protected <A extends Enum<A>> KeyframeValue.EnumV<A,E> registerEnumValue(String name, Function<E, A> entityReader, Class<A> enumClass) {
+        return registerValue(new KeyframeValue.EnumV<>(name, entityReader, enumClass));
+    }
+
+    public long getTick() {
+        return tick;
+    }
+
     public static long getGameTime(@NotNull Entity entity) {
         return UtilEntity.getLevel(entity).getGameTime();
+    }
+
+    public static float calcPartial(long startTick, long endTick, long gameTime, float partialTick) {
+        if (gameTime < startTick) return 0;
+        else if (gameTime >= endTick) return 1;
+        long length = endTick - startTick;
+        return (gameTime - startTick + partialTick) / length;
     }
 
 }

@@ -1,14 +1,12 @@
-package com.onewhohears.tacview.core;
+package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoreRecorders {
     public static abstract class AbstractLivingRec<K extends EntityKeyframe<E>, E extends LivingEntity> extends EntityRecorder<K, E> {
-        public final KeyframeValue.FloatV<E> health = registerFloatValue("health", LivingEntity::getHealth);
         public AbstractLivingRec(@NotNull E entity, int recordRate) {
             super(entity, recordRate);
         }
@@ -29,27 +27,15 @@ public class MoreRecorders {
         }
         @Override
         protected @Nullable EntityKeyframe<LivingEntity> readKeyframe(@NotNull JsonObject keyframe) {
-            return new EntityKeyframe<>(keyframe);
+            return new MoreEntityKeyframes.LivingEntityKeyframe(keyframe);
         }
         @Override
-        protected EntityKeyframe<LivingEntity> newKeyFrame(@NotNull LivingEntity entity) {
-            return new EntityKeyframe<>(entity);
-        }
-    }
-    public static class PlayerRec extends AbstractLivingRec<EntityKeyframe<Player>, Player> {
-        public PlayerRec(@NotNull Player entity, int recordRate) {
-            super(entity, recordRate);
-        }
-        public PlayerRec(@NotNull JsonObject data) {
-            super(data);
+        protected EntityKeyframe<LivingEntity> newKeyframe(@NotNull LivingEntity entity) {
+            return new MoreEntityKeyframes.LivingEntityKeyframe(entity);
         }
         @Override
-        protected @Nullable EntityKeyframe<Player> readKeyframe(@NotNull JsonObject keyframe) {
-            return new EntityKeyframe<>(keyframe);
-        }
-        @Override
-        protected EntityKeyframe<Player> newKeyFrame(@NotNull Player entity) {
-            return new EntityKeyframe<>(entity);
+        protected EntityKeyframe<LivingEntity> emptyKeyframe() {
+            return new MoreEntityKeyframes.LivingEntityKeyframe();
         }
     }
 }

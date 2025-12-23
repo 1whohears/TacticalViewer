@@ -1,4 +1,4 @@
-package com.onewhohears.tacview.core;
+package com.onewhohears.tacview.common.core;
 
 import java.util.HashMap;
 import java.util.Map;

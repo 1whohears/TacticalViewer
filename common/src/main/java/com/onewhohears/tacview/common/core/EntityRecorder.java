@@ -1,4 +1,4 @@
-package com.onewhohears.tacview.core;
+package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -23,21 +23,28 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     public final int recordRate;
 
     @NotNull private final List<K> keyframes = new ArrayList<>();
+    @NotNull private final K lerpKeyframe = emptyKeyframe();
 
     @Nullable private E entity;
     private long prevRecordTime = 0;
 
-    public K interpolate(long time, float partialTick) {
-
+    public K interpolate(K start, K end, long gameTime, float partialTick) {
+        EntityKeyframe.setToLerp(lerpKeyframe, start, end, gameTime, partialTick);
+        return lerpKeyframe;
     }
 
-    public void tickRecord() {
+    public final void tickRecord(@NotNull RecordingSession session) {
         if (entity == null) return;
         if (!shouldRecord(entity)) return;
         long time = getGameTime(entity);
         if (time - prevRecordTime < recordRate) return;
-        keyframes.add(newKeyFrame(entity));
+        keyframes.add(newKeyframe(entity));
+        extraRecordLogic(session, entity);
         prevRecordTime = time;
+    }
+
+    protected void extraRecordLogic(@NotNull RecordingSession session, @NotNull E entity) {
+
     }
 
     public EntityRecorder(@NotNull E entity, int recordRate) {
@@ -76,7 +83,8 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
 
     @Nullable
     protected abstract K readKeyframe(@NotNull JsonObject keyframe);
-    protected abstract K newKeyFrame(@NotNull E entity);
+    protected abstract K newKeyframe(@NotNull E entity);
+    protected abstract K emptyKeyframe();
     protected abstract boolean shouldRecord(@NotNull E entity);
 
 }

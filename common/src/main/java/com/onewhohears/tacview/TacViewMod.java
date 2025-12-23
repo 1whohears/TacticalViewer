@@ -1,6 +1,6 @@
 package com.onewhohears.tacview;
 
-import com.onewhohears.tacview.core.EntityRecorders;
+import com.onewhohears.tacview.common.core.EntityRecorders;
 
 public final class TacViewMod {
     public static final String MOD_ID = "tacview";

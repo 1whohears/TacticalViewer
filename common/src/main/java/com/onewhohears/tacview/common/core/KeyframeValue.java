@@ -1,4 +1,4 @@
-package com.onewhohears.tacview.core;
+package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilParse;
@@ -23,10 +23,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public abstract void readFromData(JsonObject data);
     public abstract void writeToData(JsonObject data);
     @NotNull public abstract T get();
-    @NotNull public abstract T interpolate(T end, float partial);
-    public void set(T value) {
-        this.value = value;
-    }
+    public abstract void setToLerp(T start, T end, float partial);
 
     public static class IntV<E extends Entity> extends KeyframeValue<Integer,E> {
         public IntV(String name, Function<E, Integer> entityReader) {
@@ -45,8 +42,8 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public @NotNull Integer interpolate(Integer end, float partial) {
-            return (int) ((end - get()) * partial + get());
+        public void setToLerp(Integer start, Integer end, float partial) {
+            value = (int) ((end - start) * partial + start);
         }
     }
 
@@ -67,8 +64,8 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public @NotNull Long interpolate(Long end, float partial) {
-            return (long) ((end - get()) * partial + get());
+        public void setToLerp(Long start, Long end, float partial) {
+            value = (long) ((end - get()) * partial + get());
         }
     }
 
@@ -89,8 +86,8 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public @NotNull Float interpolate(Float end, float partial) {
-            return (end - get()) * partial + get();
+        public void setToLerp(Float start, Float end, float partial) {
+            value = (end - get()) * partial + get();
         }
     }
 
@@ -111,8 +108,8 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public @NotNull Vec3 interpolate(Vec3 end, float partial) {
-            return get().lerp(end, partial);
+        public void setToLerp(Vec3 start, Vec3 end, float partial) {
+            value = get().lerp(end, partial);
         }
     }
 
@@ -133,8 +130,8 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public @NotNull UUID interpolate(UUID end, float partial) {
-            return get();
+        public void setToLerp(UUID start, UUID end, float partial) {
+            value = start;
         }
     }
 
@@ -155,8 +152,32 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public @NotNull String interpolate(String end, float partial) {
-            return get();
+        public void setToLerp(String start, String end, float partial) {
+            value = start;
+        }
+    }
+
+    public static class EnumV<A extends Enum<A>, E extends Entity> extends KeyframeValue<A,E> {
+        private final Class<A> enumClass;
+        public EnumV(String name, Function<E, A> entityReader, Class<A> enumClass) {
+            super(name, entityReader);
+            this.enumClass = enumClass;
+        }
+        @Override
+        public void readFromData(JsonObject data) {
+            value = UtilParse.getEnumSafe(data, name, enumClass);
+        }
+        @Override
+        public void writeToData(JsonObject data) {
+            UtilParse.writeEnum(data, name, value);
+        }
+        @Override
+        public @NotNull A get() {
+            return value;
+        }
+        @Override
+        public void setToLerp(A start, A end, float partial) {
+            value = start;
         }
     }
 

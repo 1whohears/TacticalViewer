@@ -1,4 +1,4 @@
-package com.onewhohears.tacview.core;
+package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilEntity;
@@ -16,14 +16,15 @@ import java.util.Map;
 public class EntityRecorders {
 
     private static final Map<String,Pair<EntityRecorderFactory,EntityRecorderReader>> RECORDER_FACTORIES = new HashMap<>();
+    // default EntityRecorderFactory EntityRecorderReader
 
     public static void registerDefaultRecorders() {
         registerEntityRecorder(EntityType.HORSE,
                 (entity, recordRate) -> new MoreRecorders.LivingRec((LivingEntity) entity, recordRate),
                 MoreRecorders.LivingRec::new);
         registerEntityRecorder(EntityType.PLAYER,
-                (entity, recordRate) -> new MoreRecorders.PlayerRec((Player) entity, recordRate),
-                MoreRecorders.PlayerRec::new);
+                (entity, recordRate) -> new PlayerRecorder((Player) entity, recordRate),
+                PlayerRecorder::new);
     }
 
     public static void registerEntityRecorder(EntityType<?> type, EntityRecorderFactory factory, EntityRecorderReader reader) {
