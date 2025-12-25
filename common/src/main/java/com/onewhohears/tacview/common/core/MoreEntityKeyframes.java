@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoreEntityKeyframes {
     public static abstract class AbstractLivingEntityKeyframe<E extends LivingEntity> extends EntityKeyframe<E> {
-        public final KeyframeValue.FloatV<E> health = registerFloatValue("health", LivingEntity::getHealth);
-        public final KeyframeValue.EnumV<Pose,E> pose = registerEnumValue("pose", Entity::getPose, Pose.class);
+        public final KeyframeValue.FloatV<E> health = registerFloatValue("health", LivingEntity::getHealth, LivingEntity::setHealth);
+        public final KeyframeValue.EnumV<Pose,E> pose = registerEnumValue("pose", Entity::getPose, Entity::setPose, Pose.class);
         protected AbstractLivingEntityKeyframe() {
             super();
         }

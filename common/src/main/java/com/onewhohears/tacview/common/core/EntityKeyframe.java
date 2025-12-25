@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
@@ -18,12 +19,13 @@ public class EntityKeyframe<E extends Entity> {
 
     public final Map<String, KeyframeValue<Object,E>> values = new HashMap<>();
 
-    public final KeyframeValue.Vec3V<E> pos = registerVec3Value("pos", Entity::position);
-    public final KeyframeValue.Vec3V<E> vel = registerVec3Value("vel", Entity::getDeltaMovement);
-    public final KeyframeValue.FloatV<E> xRot = registerFloatValue("xRot", Entity::getXRot);
-    public final KeyframeValue.FloatV<E> yRot = registerFloatValue("yRot", Entity::getYRot);
+    public final KeyframeValue.Vec3V<E> pos = registerVec3Value("pos", Entity::position, Entity::moveTo);
+    public final KeyframeValue.Vec3V<E> vel = registerVec3Value("vel", Entity::getDeltaMovement, Entity::setDeltaMovement);
+    public final KeyframeValue.FloatV<E> xRot = registerFloatValue("xRot", Entity::getXRot, Entity::setXRot);
+    public final KeyframeValue.FloatV<E> yRot = registerFloatValue("yRot", Entity::getYRot, Entity::setYRot);
     public final KeyframeValue.StringV<E> vehicleUUID = registerStringValue("vehicleUUID",
-            entity -> entity.isPassenger() ? entity.getRootVehicle().getStringUUID() : "");
+            entity -> entity.isPassenger() ? entity.getRootVehicle().getStringUUID() : "",
+            (entity, value) -> {});
 
     protected long tick;
 
@@ -65,32 +67,39 @@ public class EntityKeyframe<E extends Entity> {
         return value;
     }
 
-    protected KeyframeValue.IntV<E> registerIntValue(String name, Function<E, Integer> entityReader) {
-        return registerValue(new KeyframeValue.IntV<>(name, entityReader));
+    protected KeyframeValue.IntV<E> registerIntValue(String name, Function<E, Integer> entityReader,
+                                                     BiConsumer<E, Integer> entitySetter) {
+        return registerValue(new KeyframeValue.IntV<>(name, entityReader, entitySetter));
     }
 
-    protected KeyframeValue.LongV<E> registerLongValue(String name, Function<E, Long> entityReader) {
-        return registerValue(new KeyframeValue.LongV<>(name, entityReader));
+    protected KeyframeValue.LongV<E> registerLongValue(String name, Function<E, Long> entityReader,
+                                                       BiConsumer<E, Long> entitySetter) {
+        return registerValue(new KeyframeValue.LongV<>(name, entityReader, entitySetter));
     }
 
-    protected KeyframeValue.FloatV<E> registerFloatValue(String name, Function<E, Float> entityReader) {
-        return registerValue(new KeyframeValue.FloatV<>(name, entityReader));
+    protected KeyframeValue.FloatV<E> registerFloatValue(String name, Function<E, Float> entityReader,
+                                                         BiConsumer<E, Float> entitySetter) {
+        return registerValue(new KeyframeValue.FloatV<>(name, entityReader, entitySetter));
     }
 
-    protected KeyframeValue.Vec3V<E> registerVec3Value(String name, Function<E, Vec3> entityReader) {
-        return registerValue(new KeyframeValue.Vec3V<>(name, entityReader));
+    protected KeyframeValue.Vec3V<E> registerVec3Value(String name, Function<E, Vec3> entityReader,
+                                                       BiConsumer<E, Vec3> entitySetter) {
+        return registerValue(new KeyframeValue.Vec3V<>(name, entityReader, entitySetter));
     }
 
-    protected KeyframeValue.UUIDV<E> registerUUIDValue(String name, Function<E, UUID> entityReader) {
-        return registerValue(new KeyframeValue.UUIDV<>(name, entityReader));
+    protected KeyframeValue.UUIDV<E> registerUUIDValue(String name, Function<E, UUID> entityReader,
+                                                       BiConsumer<E, UUID> entitySetter) {
+        return registerValue(new KeyframeValue.UUIDV<>(name, entityReader, entitySetter));
     }
 
-    protected KeyframeValue.StringV<E> registerStringValue(String name, Function<E, String> entityReader) {
-        return registerValue(new KeyframeValue.StringV<>(name, entityReader));
+    protected KeyframeValue.StringV<E> registerStringValue(String name, Function<E, String> entityReader,
+                                                           BiConsumer<E, String> entitySetter) {
+        return registerValue(new KeyframeValue.StringV<>(name, entityReader, entitySetter));
     }
 
-    protected <A extends Enum<A>> KeyframeValue.EnumV<A,E> registerEnumValue(String name, Function<E, A> entityReader, Class<A> enumClass) {
-        return registerValue(new KeyframeValue.EnumV<>(name, entityReader, enumClass));
+    protected <A extends Enum<A>> KeyframeValue.EnumV<A,E> registerEnumValue(String name, Function<E, A> entityReader,
+                                                                             BiConsumer<E, A> entitySetter, Class<A> enumClass) {
+        return registerValue(new KeyframeValue.EnumV<>(name, entityReader, entitySetter, enumClass));
     }
 
     public long getTick() {
