@@ -41,10 +41,10 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     public Pair<K,K> findSurroundingKeyframes(long gameTime) {
         if (keyframes.isEmpty())
             return Pair.of(lerpKeyframe, lerpKeyframe);
-        if (keyframes.size() == 1 || gameTime <= keyframes.getFirst().tick)
-            return Pair.of(keyframes.getFirst(), keyframes.getFirst());
-        if (gameTime >= keyframes.getLast().tick)
-            return Pair.of(keyframes.getLast(), keyframes.getLast());
+        if (keyframes.size() == 1 || gameTime <= keyframes.get(0).tick)
+            return Pair.of(keyframes.get(0), keyframes.get(0));
+        if (gameTime >= keyframes.get(0).tick)
+            return Pair.of(keyframes.get(0), keyframes.get(0));
         for (int i = 1; i < keyframes.size(); ++i)
             if (gameTime <= keyframes.get(i).tick)
                 return Pair.of(keyframes.get(i-1), keyframes.get(i));
