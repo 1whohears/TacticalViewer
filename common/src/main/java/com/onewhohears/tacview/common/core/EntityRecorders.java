@@ -36,16 +36,22 @@ public class EntityRecorders {
     @NotNull
     public static EntityRecorder createEntityRecorder(@NotNull Entity entity, int recordRate) {
         String id = UtilEntity.getEntityTypeId(entity);
-        if (!RECORDER_FACTORIES.containsKey(id)) return DEFAULT_FACTORY.create(entity, recordRate);
-        return RECORDER_FACTORIES.get(id).getLeft().create(entity, recordRate);
+        EntityRecorder recorder;
+        if (!RECORDER_FACTORIES.containsKey(id)) recorder = DEFAULT_FACTORY.create(entity, recordRate);
+        else recorder = RECORDER_FACTORIES.get(id).getLeft().create(entity, recordRate);
+        recorder.readValuesFromEntityCast(entity);
+        return recorder;
     }
 
     @Nullable
     public static EntityRecorder readEntityRecorder(@NotNull JsonObject data) {
         String id = UtilParse.getStringSafe(data, "entityType", "");
         if (id.isEmpty()) return null;
-        if (!RECORDER_FACTORIES.containsKey(id)) return DEFAULT_RECORDER.read(data);
-        return RECORDER_FACTORIES.get(id).getRight().read(data);
+        EntityRecorder recorder;
+        if (!RECORDER_FACTORIES.containsKey(id)) recorder = DEFAULT_RECORDER.read(data);
+        else recorder = RECORDER_FACTORIES.get(id).getRight().read(data);
+        recorder.readValuesFromData(data);
+        return recorder;
     }
 
     public interface EntityRecorderFactory {

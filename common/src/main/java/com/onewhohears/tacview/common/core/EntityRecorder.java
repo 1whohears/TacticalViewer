@@ -70,9 +70,15 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
             entity = null;
             return;
         }
-        keyframes.add(newKeyframe(entity));
         extraRecordLogic(session, entity);
+        addNewKeyframe(entity);
         prevRecordTime = time;
+    }
+
+    protected void addNewKeyframe(@NotNull E entity) {
+        K keyframe = newKeyframe(entity);
+        keyframe.readValuesFromEntity(entity);
+        keyframes.add(keyframe);
     }
 
     protected void extraRecordLogic(@NotNull RecordingSession session, @NotNull E entity) {
@@ -99,6 +105,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
             JsonObject kfObject = kfArray.get(i).getAsJsonObject();
             K keyframe = readKeyframe(kfObject);
             if (keyframe == null) continue;
+            keyframe.readValuesFromData(kfObject);
             keyframes.add(keyframe);
         }
     }
@@ -113,6 +120,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
 
     protected void addSaveData(@NotNull JsonObject data) {
         super.addSaveData(data);
+        data.remove("tick");
         data.addProperty("recordRate", recordRate);
         data.addProperty("prevRecordTime", prevRecordTime);
         JsonArray kfArray = new JsonArray();

@@ -20,7 +20,10 @@ public class EntityKeyframe<E extends Entity> {
     public final Map<String, KeyframeValue<Object,E>> values = new HashMap<>();
 
     public final KeyframeValue.Vec3V<E> pos = registerVec3Value("pos", Entity::position, Entity::moveTo);
-    public final KeyframeValue.Vec3V<E> vel = registerVec3Value("vel", Entity::getDeltaMovement, Entity::setDeltaMovement);
+    public final KeyframeValue.Vec3V<E> vel = registerVec3Value("vel", entity -> {
+        if (entity.onGround()) return entity.getDeltaMovement().multiply(1, 0, 1);
+        else return entity.getDeltaMovement();
+    }, Entity::setDeltaMovement);
     public final KeyframeValue.FloatV<E> xRot = registerFloatValue("xRot", Entity::getXRot, Entity::setXRot);
     public final KeyframeValue.FloatV<E> yRot = registerFloatValue("yRot", Entity::getYRot, Entity::setYRot);
     public final KeyframeValue.StringV<E> vehicleUUID = registerStringValue("vehicleUUID",
@@ -31,15 +34,26 @@ public class EntityKeyframe<E extends Entity> {
 
     public EntityKeyframe(@NotNull E entity) {
         tick = getGameTime(entity);
-        values.forEach((name, value) -> value.readFromEntity(entity));
     }
 
     public EntityKeyframe(@NotNull JsonObject data) {
         tick = !data.has("tick") ? 0 : data.get("tick").getAsLong();
-        values.forEach((name, value) -> value.readFromData(data));
     }
 
     protected EntityKeyframe() {
+    }
+
+    public void readValuesFromEntityCast(@NotNull Entity entity) {
+        E e = (E) entity;
+        values.forEach((name, value) -> value.readFromEntity(e));
+    }
+
+    public void readValuesFromEntity(@NotNull E entity) {
+        values.forEach((name, value) -> value.readFromEntity(entity));
+    }
+
+    public void readValuesFromData(@NotNull JsonObject data) {
+        values.forEach((name, value) -> value.readFromData(data));
     }
 
     public static <K extends EntityKeyframe<E>, E extends Entity> void setToLerp(

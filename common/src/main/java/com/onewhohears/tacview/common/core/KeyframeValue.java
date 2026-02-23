@@ -22,6 +22,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
     }
     public void readFromEntity(E entity) {
         value = entityReader.apply(entity);
+        System.out.println("Read Value "+name+" = "+value);
     }
     public void setEntity(E entity) {
         entitySetter.accept(entity, value);
@@ -29,6 +30,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public abstract void readFromData(JsonObject data);
     public abstract void writeToData(JsonObject data);
     @NotNull public abstract T get();
+    @NotNull public abstract T getDefault();
     public abstract void setToLerp(T start, T end, float partial);
 
     public static class IntV<E extends Entity> extends KeyframeValue<Integer,E> {
@@ -46,6 +48,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
         @Override
         public @NotNull Integer get() {
             return value;
+        }
+        @Override
+        public @NotNull Integer getDefault() {
+            return 0;
         }
         @Override
         public void setToLerp(Integer start, Integer end, float partial) {
@@ -70,6 +76,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
+        public @NotNull Long getDefault() {
+            return 0L;
+        }
+        @Override
         public void setToLerp(Long start, Long end, float partial) {
             value = (long) ((end - get()) * partial + get());
         }
@@ -90,6 +100,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
         @Override
         public @NotNull Float get() {
             return value;
+        }
+        @Override
+        public @NotNull Float getDefault() {
+            return 0f;
         }
         @Override
         public void setToLerp(Float start, Float end, float partial) {
@@ -114,12 +128,17 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
+        public @NotNull Vec3 getDefault() {
+            return Vec3.ZERO;
+        }
+        @Override
         public void setToLerp(Vec3 start, Vec3 end, float partial) {
             value = get().lerp(end, partial);
         }
     }
 
     public static class UUIDV<E extends Entity> extends KeyframeValue<UUID,E> {
+        public static final UUID DEFAULT_UUID = UUID.fromString("12345678-0000-0000-0000-000000000000");
         public UUIDV(String name, Function<E, UUID> entityReader, BiConsumer<E, UUID> entitySetter) {
             super(name, entityReader, entitySetter);
         }
@@ -134,6 +153,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
         @Override
         public @NotNull UUID get() {
             return value;
+        }
+        @Override
+        public @NotNull UUID getDefault() {
+            return DEFAULT_UUID;
         }
         @Override
         public void setToLerp(UUID start, UUID end, float partial) {
@@ -158,6 +181,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
+        public @NotNull String getDefault() {
+            return "";
+        }
+        @Override
         public void setToLerp(String start, String end, float partial) {
             value = start;
         }
@@ -180,6 +207,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
         @Override
         public @NotNull A get() {
             return value;
+        }
+        @Override
+        public @NotNull A getDefault() {
+            return enumClass.getEnumConstants()[0];
         }
         @Override
         public void setToLerp(A start, A end, float partial) {
