@@ -13,6 +13,15 @@ public class TVClientManager {
 
     public void renderTacViewEntity(TacViewEntity entity, float yaw, float partialTick,
                                     PoseStack stack, MultiBufferSource buffer, int packedLight) {
+        String sessionId = entity.getSessionId();
+
+
+        float width = entity.getWidth();
+        float height = entity.getHeight();
+        long tick = entity.getPlaybackTick();
+        boolean paused = entity.isPaused();
+        int tickRate = entity.getTickRate();
+
         stack.pushPose();
         Minecraft m = Minecraft.getInstance();
 

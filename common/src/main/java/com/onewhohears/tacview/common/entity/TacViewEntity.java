@@ -1,6 +1,7 @@
 package com.onewhohears.tacview.common.entity;
 
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.tacview.client.core.ClientPlayback;
 import com.onewhohears.tacview.common.core.RecordingSession;
 import com.onewhohears.tacview.common.core.SessionManager;
 import net.minecraft.nbt.CompoundTag;
@@ -16,7 +17,14 @@ public class TacViewEntity extends Entity {
 
     public static final EntityDataAccessor<Boolean> PAUSED = SynchedEntityData.defineId(TacViewEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Long> TICK = SynchedEntityData.defineId(TacViewEntity.class, EntityDataSerializers.LONG);
+    public static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(TacViewEntity.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> HEIGHT = SynchedEntityData.defineId(TacViewEntity.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<String> SESSION_ID = SynchedEntityData.defineId(TacViewEntity.class, EntityDataSerializers.STRING);
+
+    /**
+     * NULL IF ON SERVER
+     */
+    public final ClientPlayback playback;
 
     @Override
     public void tick() {
@@ -70,6 +78,8 @@ public class TacViewEntity extends Entity {
 
     public TacViewEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
+        if (UtilEntity.getLevel(this).isClientSide()) playback = new ClientPlayback(this);
+        else playback = null;
         blocksBuilding = true;
         noPhysics = true;
         noCulling = true;
@@ -79,6 +89,8 @@ public class TacViewEntity extends Entity {
     protected void readAdditionalSaveData(CompoundTag nbt) {
         setPaused(nbt.getBoolean("paused"));
         setPlaybackTick(nbt.getLong("playback_tick"));
+        setWidth(nbt.getFloat("width"));
+        setHeight(nbt.getFloat("height"));
         setSessionId(nbt.getString("session_id"));
     }
 
@@ -86,6 +98,8 @@ public class TacViewEntity extends Entity {
     protected void addAdditionalSaveData(CompoundTag nbt) {
         nbt.putBoolean("paused", isPaused());
         nbt.putLong("playback_tick", getPlaybackTick());
+        nbt.putFloat("width", getWidth());
+        nbt.putFloat("height", getHeight());
         nbt.putString("session_id", getSessionId());
     }
 
@@ -93,6 +107,8 @@ public class TacViewEntity extends Entity {
     protected void defineSynchedData() {
         entityData.define(PAUSED, false);
         entityData.define(TICK, 0L);
+        entityData.define(WIDTH, 4F);
+        entityData.define(HEIGHT, 4F);
         entityData.define(SESSION_ID, "");
     }
 
@@ -126,5 +142,21 @@ public class TacViewEntity extends Entity {
 
     public int getTickRate() {
         return 1; // TODO variable tick rate
+    }
+
+    public float getWidth() {
+        return entityData.get(WIDTH);
+    }
+
+    public float getHeight() {
+        return entityData.get(HEIGHT);
+    }
+
+    public void setWidth(float width) {
+        entityData.set(WIDTH, width);
+    }
+
+    public void setHeight(float height) {
+        entityData.set(HEIGHT, height);
     }
 }
