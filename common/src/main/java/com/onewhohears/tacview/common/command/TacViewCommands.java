@@ -20,7 +20,7 @@ public class TacViewCommands {
     public TacViewCommands(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("tacview").requires((stack) -> stack.hasPermission(2))
                 .then(Commands.literal("start")
-                        .then(Commands.argument("session_id", StringArgumentType.word())
+                        .then(Commands.argument("session_id", StringArgumentType.word()) // TODO auto name new recordings argument
                                 .then(Commands.argument("tracked_entities", EntityArgument.entities())
                                         .executes(ctx -> startRecording(
                                                 ctx.getSource(),

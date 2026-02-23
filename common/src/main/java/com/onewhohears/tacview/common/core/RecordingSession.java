@@ -7,10 +7,10 @@ import com.onewhohears.onewholibs.util.UtilParse;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,6 +29,7 @@ public class RecordingSession {
     private int length = 0;
     private long sessionStartTime = -1;
     private boolean recordingComplete = false;
+    private Vec3 minBound = Vec3.ZERO, maxBound = Vec3.ZERO;
 
     public void addEntityToRecord(@NotNull Entity entity) {
         if (RECORDERS.containsKey(entity.getUUID())) return;
@@ -73,6 +74,8 @@ public class RecordingSession {
             if (recorder == null) continue;
             RECORDERS.put(recorder.uuid.get(), recorder);
         }
+        this.minBound = UtilParse.readVec3(data, "minBound");
+        this.maxBound = UtilParse.readVec3(data, "maxBound");
     }
 
     public JsonObject getSaveData() {
@@ -87,6 +90,8 @@ public class RecordingSession {
         JsonArray recorderArray = new JsonArray();
         for (EntityRecorder recorder : RECORDERS.values()) recorderArray.add(recorder.getSaveData());
         data.add("recorders", recorderArray);
+        UtilParse.writeVec3(data, "minBound", minBound);
+        UtilParse.writeVec3(data, "maxBound", maxBound);
         return data;
     }
 
@@ -145,6 +150,28 @@ public class RecordingSession {
                 +"|[FINISHED]"+isRecordingComplete()
                 +"|[RECORDERS]"+RECORDERS.size()
                 +"|[DIMENSION]"+getDimension().toString();
+    }
+
+    public Vec3 getMinBound() {
+        return minBound;
+    }
+
+    public Vec3 getMaxBound() {
+        return maxBound;
+    }
+
+    public void updatePosBounds(Vec3 pos) {
+        if (minBound.equals(Vec3.ZERO) && maxBound.equals(Vec3.ZERO)) {
+            minBound = pos;
+            maxBound = pos;
+            return;
+        }
+        if (pos.x < minBound.x) minBound = minBound.multiply(0, 1, 1).add(pos.x, 0, 0);
+        if (pos.y < minBound.y) minBound = minBound.multiply(1, 0, 1).add(0, pos.y, 0);
+        if (pos.z < minBound.z) minBound = minBound.multiply(1, 1, 0).add(0, 0, pos.z);
+        if (pos.x > maxBound.x) minBound = minBound.multiply(0, 1, 1).add(pos.x, 0, 0);
+        if (pos.y > maxBound.y) minBound = minBound.multiply(1, 0, 1).add(0, pos.y, 0);
+        if (pos.z > maxBound.z) minBound = minBound.multiply(1, 1, 0).add(0, 0, pos.z);
     }
 
 }

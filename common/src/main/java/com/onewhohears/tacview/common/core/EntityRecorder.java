@@ -66,10 +66,11 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
                 return;
             }
         }
-        if (!isAlive(entity)) {
+        if (!shouldRecord(entity)) {
             entity = null;
             return;
         }
+        session.updatePosBounds(entity.position());
         extraRecordLogic(session, entity);
         addNewKeyframe(entity);
         prevRecordTime = time;
@@ -137,7 +138,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     protected abstract K readKeyframe(@NotNull JsonObject keyframe);
     protected abstract K newKeyframe(@NotNull E entity);
     protected abstract K emptyKeyframe();
-    protected boolean isAlive(@NotNull E entity) {
+    protected boolean shouldRecord(@NotNull E entity) {
         return !entity.isRemoved();
     }
 

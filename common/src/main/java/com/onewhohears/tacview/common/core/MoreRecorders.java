@@ -39,7 +39,7 @@ public class MoreRecorders {
             super(data, entityFinder);
         }
         @Override
-        protected boolean isAlive(@NotNull LivingEntity entity) {
+        protected boolean shouldRecord(@NotNull LivingEntity entity) {
             return !entity.isRemoved() && entity.getHealth() > 0;
         }
     }
