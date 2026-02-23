@@ -11,8 +11,8 @@ public class TVClientManager {
 
     }
 
-    public void render(TacViewEntity entity, float yaw, float partialTick,
-                       PoseStack stack, MultiBufferSource buffer, int packedLight) {
+    public void renderTacViewEntity(TacViewEntity entity, float yaw, float partialTick,
+                                    PoseStack stack, MultiBufferSource buffer, int packedLight) {
         stack.pushPose();
         Minecraft m = Minecraft.getInstance();
 

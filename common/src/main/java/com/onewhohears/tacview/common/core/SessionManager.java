@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class SessionManager {
@@ -23,8 +24,9 @@ public class SessionManager {
 
     private final Map<String,RecordingSession> SESSIONS = new HashMap<>();
 
-    public boolean startNewSession(@NotNull String sessionId, @NotNull Collection<Entity> entities,
-                                   int defaultRecordRate, int length, @NotNull Consumer<String> debug) {
+    public boolean startNewSession(@NotNull String sessionId, @NotNull Collection<? extends Entity> entities,
+                                   @NotNull ServerLevel level, int defaultRecordRate, int length,
+                                   @NotNull Consumer<String> debug) {
         if (SESSIONS.containsKey(sessionId)) {
             debug.accept("Cannot start new session because a session with id "+sessionId+" already exists.");
             return false;
@@ -33,8 +35,9 @@ public class SessionManager {
             debug.accept("Cannot start new session because an unloaded session file with id "+sessionId+" already exists.");
             return false;
         }
-        RecordingSession session = new RecordingSession(sessionId, entities, defaultRecordRate, length);
+        RecordingSession session = new RecordingSession(sessionId, entities, defaultRecordRate, length, level);
         SESSIONS.put(sessionId, session);
+        debug.accept("Started new recording session "+sessionId+" it will end in "+length+" ticks!");
         return true;
     }
 
@@ -45,6 +48,14 @@ public class SessionManager {
     @Nullable
     public RecordingSession getSession(@NotNull String id) {
         return SESSIONS.get(id);
+    }
+
+    public Set<String> getLoadedSessionIds() {
+        return SESSIONS.keySet();
+    }
+
+    public Set<String> getUnloadedSessionIds() {
+        return UtilFile.getJsonFileNamesInGamePath(SESSION_PATH);
     }
 
     public boolean readSessionData(@NotNull String sessionId, @NotNull Consumer<String> debug) {
@@ -87,6 +98,16 @@ public class SessionManager {
         SESSIONS.remove(sessionId);
         debug.accept("Unloaded Recording Session "+sessionId);
         return true;
+    }
+
+    public boolean stopRecording(@NotNull String sessionId, @NotNull ServerLevel level,
+                                 @NotNull Consumer<String> debug) {
+        if (SESSIONS.containsKey(sessionId)) {
+            debug.accept("Could not stop recording session "+sessionId+" because it was already loaded!");
+            return false;
+        }
+        RecordingSession session = SESSIONS.get(sessionId);
+        return session.finishRecording(level, debug);
     }
 
     private static SessionManager INSTANCE = null;

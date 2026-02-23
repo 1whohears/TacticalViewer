@@ -8,6 +8,10 @@ import dev.architectury.platform.Platform;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UtilFile {
 
@@ -55,6 +59,31 @@ public class UtilFile {
 
     public static boolean doesFileExistAbsolutePath(String path) {
         return Files.exists(Path.of(path));
+    }
+
+    public static Set<String> getJsonFileNamesInGamePath(String path) {
+        Path gamePath = Platform.getGameFolder();
+        Path resolved = gamePath.resolve(path);
+        return getJsonFileNamesInAbsolutePath(resolved.toString());
+    }
+
+    public static Set<String> getJsonFileNamesInAbsolutePath(String path) {
+        Path dir = Paths.get(path);
+        if (!dir.isAbsolute() || !Files.isDirectory(dir)) {
+            return Set.of();
+        }
+        try (Stream<Path> stream = Files.list(dir)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .filter(name -> name.toLowerCase().endsWith(".json"))
+                    .map(name -> name.substring(0, name.length() - 5))
+                    .collect(Collectors.toSet());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Set.of();
+        }
     }
 
 }

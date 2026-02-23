@@ -4,14 +4,20 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilParse;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class RecordingSession {
 
@@ -19,6 +25,7 @@ public class RecordingSession {
     private final Map<UUID,EntityRecorder> RECORDERS = new HashMap<>();
     private final int defaultRecordRate;
     private final int maxLength;
+    private final ResourceKey<Level> dimension;
     private int length = 0;
     private long sessionStartTime = -1;
     private boolean recordingComplete = false;
@@ -34,11 +41,11 @@ public class RecordingSession {
         if (sessionStartTime == -1) sessionStartTime = currentTime;
         RECORDERS.forEach((uuid, recorder) -> recorder.tickRecord(this, level));
         length = Math.toIntExact(currentTime - sessionStartTime);
-        if (currentTime - sessionStartTime >= maxLength) finishRecording(level);
+        if (currentTime - sessionStartTime >= maxLength) finishRecording(level, SessionManager.INFO);
     }
 
-    public RecordingSession(@NotNull String sessionId, @NotNull Collection<Entity> entities,
-                            int defaultRecordRate, int maxLength) {
+    public RecordingSession(@NotNull String sessionId, @NotNull Collection<? extends Entity> entities,
+                            int defaultRecordRate, int maxLength, @NotNull ServerLevel level) {
         this.sessionId = sessionId;
         if (defaultRecordRate <= 0) defaultRecordRate = 1;
         this.defaultRecordRate = defaultRecordRate;
@@ -47,6 +54,7 @@ public class RecordingSession {
         for (Entity entity : entities) {
             RECORDERS.put(entity.getUUID(), EntityRecorders.createEntityRecorder(entity, defaultRecordRate));
         }
+        this.dimension = level.dimension();
     }
 
     public RecordingSession(@NotNull JsonObject data) {
@@ -56,6 +64,8 @@ public class RecordingSession {
         this.maxLength = UtilParse.getIntSafe(data, "maxLength", -1);
         this.length = UtilParse.getIntSafe(data, "length", -1);
         this.recordingComplete = UtilParse.getBooleanSafe(data, "recordingComplete", false);
+        this.dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.tryParse(
+                UtilParse.getStringSafe(data, "dimension", "minecraft:overworld")));
         JsonArray recorderArray = !data.has("recorders") ? new JsonArray() : data.get("recorders").getAsJsonArray();
         for (int i = 0; i < recorderArray.size(); ++i) {
             JsonObject recObject = recorderArray.get(i).getAsJsonObject();
@@ -73,6 +83,7 @@ public class RecordingSession {
         data.addProperty("maxLength", maxLength);
         data.addProperty("length", length);
         data.addProperty("recordingComplete", recordingComplete);
+        data.addProperty("dimension", dimension.location().toString());
         JsonArray recorderArray = new JsonArray();
         for (EntityRecorder recorder : RECORDERS.values()) recorderArray.add(recorder.getSaveData());
         data.add("recorders", recorderArray);
@@ -105,12 +116,35 @@ public class RecordingSession {
         return recordingComplete;
     }
 
-    public void finishRecording(@NotNull ServerLevel level) {
-        if (isRecordingComplete()) return;
+    public boolean finishRecording(@NotNull ServerLevel level, @NotNull Consumer<String> debug) {
+        if (isRecordingComplete()) {
+            debug.accept("Could not finish the recording "+sessionId+" because the recording already finished!");
+            return false;
+        }
+        if (!level.dimension().equals(getDimension())) {
+            debug.accept("Could not finish the recording "+sessionId+" because" +
+                    " you are not in the same dimension as the recording "+getDimension().location());
+            return false;
+        }
         long currentTime = level.getGameTime();
         length = Math.toIntExact(currentTime - sessionStartTime);
         recordingComplete = true;
         SessionManager.get().saveSessionData(getSessionId(), SessionManager.INFO);
+        debug.accept("Finished recording "+sessionId+"! The recording is "+length+" ticks long!");
+        return true;
+    }
+
+    public ResourceKey<Level> getDimension() {
+        return dimension;
+    }
+
+    @Override
+    public String toString() {
+        return "[ID]"+getSessionId()
+                +"|[LENGTH/MAX]"+getLength()+"/"+getMaxLength()
+                +"|[FINISHED]"+isRecordingComplete()
+                +"|[RECORDERS]"+RECORDERS.size()
+                +"|[DIMENSION]"+getDimension().toString();
     }
 
 }

@@ -18,7 +18,7 @@ public class TacViewEntityRenderer extends EntityRenderer<TacViewEntity> {
     @Override
     public void render(TacViewEntity entity, float yaw, float partialTick,
                        PoseStack stack, MultiBufferSource buffer, int packedLight) {
-        TVClientManager.get().render(entity, yaw, partialTick, stack, buffer, packedLight);
+        TVClientManager.get().renderTacViewEntity(entity, yaw, partialTick, stack, buffer, packedLight);
     }
 
     @Override
