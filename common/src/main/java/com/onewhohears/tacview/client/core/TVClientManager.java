@@ -1,9 +1,6 @@
 package com.onewhohears.tacview.client.core;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.onewhohears.tacview.common.entity.TacViewEntity;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import org.jetbrains.annotations.NotNull;
 
 public class TVClientManager {
 
@@ -11,23 +8,8 @@ public class TVClientManager {
 
     }
 
-    public void renderTacViewEntity(TacViewEntity entity, float yaw, float partialTick,
-                                    PoseStack stack, MultiBufferSource buffer, int packedLight) {
-        String sessionId = entity.getSessionId();
+    public void requestRecordingSessionFromServer(@NotNull String sessionId) {
 
-
-        float width = entity.getWidth();
-        float height = entity.getHeight();
-        long tick = entity.getPlaybackTick();
-        boolean paused = entity.isPaused();
-        int tickRate = entity.getTickRate();
-
-        stack.pushPose();
-        Minecraft m = Minecraft.getInstance();
-
-
-
-        stack.popPose();
     }
 
     private static TVClientManager INSTANCE = null;
