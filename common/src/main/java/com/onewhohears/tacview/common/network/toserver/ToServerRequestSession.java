@@ -35,7 +35,7 @@ public class ToServerRequestSession extends BaseC2SMessage {
             if (context.getEnvironment().toPlatform() != EnvType.SERVER) return;
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             RecordingSession session = SessionManager.get().getSession(sessionId);
-            new ToClientSendSession(session).sendTo(player);
+            new ToClientSendSession(sessionId, session).sendTo(player);
         });
     }
 

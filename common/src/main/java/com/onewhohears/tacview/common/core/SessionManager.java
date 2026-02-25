@@ -110,6 +110,11 @@ public class SessionManager {
         return session.finishRecording(level, debug);
     }
 
+    public void readSessionDataFromServer(@NotNull JsonObject sessionData) {
+        RecordingSession session = new RecordingSession(sessionData);
+        SESSIONS.put(session.getSessionId(), session);
+    }
+
     private static SessionManager INSTANCE = null;
 
     public static SessionManager get() {

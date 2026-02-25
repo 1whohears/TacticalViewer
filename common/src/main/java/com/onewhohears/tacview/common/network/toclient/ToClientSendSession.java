@@ -20,18 +20,16 @@ public class ToClientSendSession extends BaseS2CMessage {
     @NotNull private final String sessionId;
     @NotNull private final JsonObject sessionData;
 
-    public ToClientSendSession(@Nullable RecordingSession session) {
+    public ToClientSendSession(@NotNull String sessionId, @Nullable RecordingSession session) {
+        this.sessionId = sessionId;
         if (session == null) {
             sessionState = SessionState.NOT_EXIST;
-            sessionId = "";
             sessionData = new JsonObject();
         } else if (!session.isRecordingComplete()) {
             sessionState = SessionState.NOT_FINISHED;
-            sessionId = "";
             sessionData = new JsonObject();
         } else {
             sessionState = SessionState.COMPLETE;
-            sessionId = session.getSessionId();
             sessionData = session.getSaveData();
         }
     }
