@@ -3,7 +3,9 @@ package com.onewhohears.tacview.common.event;
 import com.mojang.brigadier.CommandDispatcher;
 import com.onewhohears.tacview.common.command.TacViewCommands;
 import com.onewhohears.tacview.common.core.SessionManager;
+import com.onewhohears.tacview.common.network.TVPacketHandler;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -15,6 +17,11 @@ public class TVCommonEventHandlers {
     public static void init() {
         TickEvent.SERVER_LEVEL_POST.register(TVCommonEventHandlers::onServerLevelPost);
         CommandRegistrationEvent.EVENT.register(TVCommonEventHandlers::registerCommands);
+        LifecycleEvent.SETUP.register(TVCommonEventHandlers::onSetup);
+    }
+
+    private static void onSetup() {
+        TVPacketHandler.register();
     }
 
     private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher,
