@@ -159,4 +159,9 @@ public class TacViewEntity extends Entity {
     public void setHeight(float height) {
         entityData.set(HEIGHT, height);
     }
+
+    public void resetReplay() {
+        setPlaybackTick(0);
+        setPaused(false);
+    }
 }

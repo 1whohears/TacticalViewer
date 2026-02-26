@@ -2,9 +2,12 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
+import com.onewhohears.tacview.common.entity.TacViewEntity;
+import com.onewhohears.tacview.init.TVModEntities;
 import com.onewhohears.tacview.util.UtilFile;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -23,6 +26,39 @@ public class SessionManager {
     public static String SESSION_PATH = "tac_view/recordings/";
 
     private final Map<String,RecordingSession> SESSIONS = new HashMap<>();
+
+    public boolean watchReplay(@NotNull TacViewEntity entity, @NotNull String sessionId,
+                               @NotNull Consumer<String> debug) {
+        if (!SESSIONS.containsKey(sessionId)) {
+            debug.accept("Could not start playback for session "+sessionId
+                    +" because the session is not loaded or does not exist!");
+            return false;
+        }
+        if (!SESSIONS.get(sessionId).isRecordingComplete()) {
+            debug.accept("Could not start playback for session "+sessionId
+                    +" because the session has not finished recording!");
+            return false;
+        }
+        entity.setSessionId(sessionId);
+        entity.resetReplay();
+        debug.accept("Started playback for session "+sessionId+" at "+entity.position());
+        return true;
+    }
+
+    public boolean createViewer(@NotNull ServerLevel level, @NotNull Vec3 pos, float width, float height,
+                                @NotNull Consumer<String> debug) {
+        TacViewEntity entity = TVModEntities.TAC_VIEW.get().create(level);
+        if (entity == null) {
+            debug.accept("Failed to create a viewer entity.");
+            return false;
+        }
+        entity.setPos(pos);
+        entity.setWidth(width);
+        entity.setHeight(height);
+        level.addFreshEntity(entity);
+        debug.accept("Created a new viewer at "+pos);
+        return true;
+    }
 
     public boolean startNewSession(@NotNull String sessionId, @NotNull Collection<? extends Entity> entities,
                                    @NotNull ServerLevel level, int defaultRecordRate, int length,
