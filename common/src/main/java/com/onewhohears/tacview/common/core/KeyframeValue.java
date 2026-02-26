@@ -14,7 +14,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public final String name;
     private final Function<E,T> entityReader;
     private final BiConsumer<E,T> entitySetter;
-    protected T value;
+    protected T value = getDefault();
     public KeyframeValue(String name, Function<E,T> entityReader, BiConsumer<E,T> entitySetter) {
         this.name = name;
         this.entityReader = entityReader;
@@ -192,9 +192,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
 
     public static class EnumV<A extends Enum<A>, E extends Entity> extends KeyframeValue<A,E> {
         private final Class<A> enumClass;
+        private final A defaultValue;
         public EnumV(String name, Function<E, A> entityReader, BiConsumer<E, A> entitySetter, Class<A> enumClass) {
             super(name, entityReader, entitySetter);
             this.enumClass = enumClass;
+            this.defaultValue = enumClass.getEnumConstants()[0];
         }
         @Override
         public void readFromData(JsonObject data) {
@@ -210,7 +212,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
         @Override
         public @NotNull A getDefault() {
-            return enumClass.getEnumConstants()[0];
+            return defaultValue;
         }
         @Override
         public void setToLerp(A start, A end, float partial) {
