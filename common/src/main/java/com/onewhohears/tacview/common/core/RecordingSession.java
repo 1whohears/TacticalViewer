@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class RecordingSession {
@@ -43,6 +44,10 @@ public class RecordingSession {
         RECORDERS.forEach((uuid, recorder) -> recorder.tickRecord(this, level));
         length = Math.toIntExact(currentTime - sessionStartTime);
         if (currentTime - sessionStartTime >= maxLength) finishRecording(level, SessionManager.INFO);
+    }
+
+    public void forEachRecorder(BiConsumer<UUID,EntityRecorder> consumer) {
+        RECORDERS.forEach(consumer);
     }
 
     public RecordingSession(@NotNull String sessionId, @NotNull Collection<? extends Entity> entities,

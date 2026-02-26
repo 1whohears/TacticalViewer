@@ -43,6 +43,10 @@ public class EntityKeyframe<E extends Entity> {
     protected EntityKeyframe() {
     }
 
+    public void writeToFakeEntity(@NotNull E entity) {
+        values.forEach((name, value) -> value.setEntity(entity));
+    }
+
     public void readValuesFromEntityCast(@NotNull Entity entity) {
         E e = (E) entity;
         values.forEach((name, value) -> value.readFromEntity(e));
