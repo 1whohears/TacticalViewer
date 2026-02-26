@@ -71,6 +71,13 @@ public class TacViewCommands {
                                 ))
                         )
                 )
+                .then(Commands.literal("load")
+                        .then(Commands.argument("session_id", StringArgumentType.word())
+                                .executes(ctx -> loadRecording(
+                                        ctx.getSource(), StringArgumentType.getString(ctx, "session_id")
+                                ))
+                        )
+                )
                 .then(Commands.literal("watch")
                         .then(Commands.argument("session_id", StringArgumentType.word())
                                 .executes(ctx -> watchReplay(ctx.getSource(),
@@ -174,6 +181,14 @@ public class TacViewCommands {
     private int stopRecording(@NotNull CommandSourceStack source, @NotNull String sessionId) {
         AtomicReference<String> msg = new AtomicReference<>();
         boolean result = SessionManager.get().stopRecording(sessionId, source.getLevel(), msg::set);
+        if (result) source.sendSuccess(() -> UtilMCText.literal(msg.get()), true);
+        else source.sendFailure(UtilMCText.literal(msg.get()));
+        return result ? 1 : 0;
+    }
+
+    private int loadRecording(@NotNull CommandSourceStack source, @NotNull String sessionId) {
+        AtomicReference<String> msg = new AtomicReference<>();
+        boolean result = SessionManager.get().readSessionData(sessionId, msg::set);
         if (result) source.sendSuccess(() -> UtilMCText.literal(msg.get()), true);
         else source.sendFailure(UtilMCText.literal(msg.get()));
         return result ? 1 : 0;
