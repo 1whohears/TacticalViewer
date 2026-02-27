@@ -111,6 +111,9 @@ public class ClientPlayback {
             }
             stack.popPose();
         });
+
+        // TODO render height map using distant horizons cache
+
         stack.popPose();
     }
 
