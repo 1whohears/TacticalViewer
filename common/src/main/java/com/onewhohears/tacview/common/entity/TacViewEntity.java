@@ -12,6 +12,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TacViewEntity extends Entity {
@@ -27,10 +28,19 @@ public class TacViewEntity extends Entity {
      */
     public final ClientPlayback playback;
 
+    @NotNull private String alreadyCheckedSession = "";
+
     @Override
     public void tick() {
         super.tick();
         RecordingSession session = SessionManager.get().getSession(getSessionId());
+        if (session == null && !UtilEntity.getLevel(this).isClientSide()
+                && !alreadyCheckedSession.equals(getSessionId())) {
+            SessionManager.get().readSessionData(getSessionId(), msg -> {});
+            alreadyCheckedSession = getSessionId();
+            session = SessionManager.get().getSession(getSessionId());
+            resetReplay();
+        }
         controlTime(session);
     }
 
@@ -44,12 +54,7 @@ public class TacViewEntity extends Entity {
     }
 
     protected void fixTick(@Nullable RecordingSession session) {
-        if (session == null) {
-            if (UtilEntity.getLevel(this).isClientSide()) {
-                TVClientManager.get().requestRecordingSessionFromServer(getSessionId());
-            }
-            return;
-        }
+        if (session == null) return;
         long tick = getPlaybackTick();
         long start = session.getSessionStartTime();
         if (tick < start) {
