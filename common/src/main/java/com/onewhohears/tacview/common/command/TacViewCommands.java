@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.onewhohears.onewholibs.util.UtilMCText;
 import com.onewhohears.tacview.common.core.RecordingSession;
 import com.onewhohears.tacview.common.core.SessionManager;
@@ -28,6 +29,7 @@ public class TacViewCommands {
         d.register(Commands.literal("tacview").requires((stack) -> stack.hasPermission(2))
                 .then(Commands.literal("start")
                         .then(Commands.argument("session_id", StringArgumentType.word()) // TODO auto name new recordings argument
+                                .suggests(suggestLoadedSessionId())
                                 .then(Commands.argument("tracked_entities", EntityArgument.entities())
                                         .executes(ctx -> startRecording(
                                                 ctx.getSource(),
@@ -58,6 +60,7 @@ public class TacViewCommands {
                 )
                 .then(Commands.literal("stop")
                         .then(Commands.argument("session_id", StringArgumentType.word())
+                                .suggests(suggestLoadedSessionId())
                                 .executes(ctx -> stopRecording(
                                         ctx.getSource(), StringArgumentType.getString(ctx, "session_id")
                                 ))
@@ -66,6 +69,7 @@ public class TacViewCommands {
                 .then(Commands.literal("info")
                         .executes(ctx -> listInfoAll(ctx.getSource()))
                         .then(Commands.argument("session_id", StringArgumentType.word())
+                                .suggests(suggestLoadedSessionId())
                                 .executes(ctx -> listLoadedInfo(
                                         ctx.getSource(), StringArgumentType.getString(ctx, "session_id")
                                 ))
@@ -73,6 +77,7 @@ public class TacViewCommands {
                 )
                 .then(Commands.literal("load")
                         .then(Commands.argument("session_id", StringArgumentType.word())
+                                .suggests(suggestUnloadedSessionId())
                                 .executes(ctx -> loadRecording(
                                         ctx.getSource(), StringArgumentType.getString(ctx, "session_id")
                                 ))
@@ -80,6 +85,7 @@ public class TacViewCommands {
                 )
                 .then(Commands.literal("watch")
                         .then(Commands.argument("session_id", StringArgumentType.word())
+                                .suggests(suggestLoadedSessionId())
                                 .executes(ctx -> watchReplay(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "session_id"), null
                                 ))
@@ -116,6 +122,20 @@ public class TacViewCommands {
                         )
                 )
         );
+    }
+
+    private SuggestionProvider<CommandSourceStack> suggestLoadedSessionId() {
+        return (context, builder) -> {
+            SessionManager.get().getLoadedSessionIds().forEach(builder::suggest);
+            return builder.buildFuture();
+        };
+    }
+
+    private SuggestionProvider<CommandSourceStack> suggestUnloadedSessionId() {
+        return (context, builder) -> {
+            SessionManager.get().getUnloadedSessionIds().forEach(builder::suggest);
+            return builder.buildFuture();
+        };
     }
 
     private int createViewer(@NotNull CommandSourceStack source, @Nullable Vec3 pos, float width, float height) {

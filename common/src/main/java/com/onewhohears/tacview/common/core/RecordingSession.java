@@ -154,7 +154,7 @@ public class RecordingSession {
                 +"|[LENGTH/MAX]"+getLength()+"/"+getMaxLength()
                 +"|[FINISHED]"+isRecordingComplete()
                 +"|[RECORDERS]"+RECORDERS.size()
-                +"|[DIMENSION]"+getDimension().toString();
+                +"|[DIMENSION]"+getDimension().location();
     }
 
     public Vec3 getMinBound() {

@@ -91,7 +91,9 @@ public class SessionManager {
     }
 
     public Set<String> getUnloadedSessionIds() {
-        return UtilFile.getJsonFileNamesInGamePath(SESSION_PATH);
+        Set<String> ids = UtilFile.getJsonFileNamesInGamePath(SESSION_PATH);
+        ids.removeAll(getLoadedSessionIds());
+        return ids;
     }
 
     public boolean readSessionData(@NotNull String sessionId, @NotNull Consumer<String> debug) {
