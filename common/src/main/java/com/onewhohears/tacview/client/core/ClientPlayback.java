@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
@@ -59,11 +58,10 @@ public class ClientPlayback {
         Vec3 minBound = session.getMinBound();
         Vec3 maxBound = session.getMaxBound();
         Vec3 size = maxBound.subtract(minBound);
-        Vec3 center = minBound.add(size.scale(0.5));
+        float scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
+        Vec3 center = minBound.add(size.multiply(0.5, 0, 0.5));
 
         Minecraft m = Minecraft.getInstance();
-
-        float scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
 
         stack.pushPose();
         stack.scale(scale, scale, scale);
