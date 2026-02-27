@@ -43,7 +43,7 @@ public class ClientPlayback {
     public void render(float yaw, float partialTick, PoseStack stack, MultiBufferSource buffer, int packedLight) {
         String sessionId = parent.getSessionId();
         RecordingSession session = SessionManager.get().getSession(sessionId);
-        if (session == null) {
+        if (session == null || !session.isRecordingComplete()) {
             TVClientManager.get().requestRecordingSessionFromServer(sessionId);
             return;
         }
