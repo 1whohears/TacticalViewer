@@ -11,9 +11,12 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 
 public class MoreRecorders {
+    public static final BiFunction<ServerLevel,UUID,Entity> DEFAULT_ENTITY_GETTER = ServerLevel::getEntity;
+    public static final BiFunction<ServerLevel,UUID,LivingEntity> DEFAULT_LIVING_GETTER =
+            (level, uuid) -> level.getEntity(uuid) instanceof LivingEntity liv ? liv : null;
     public static class DefaultEntityRecorder extends EntityRecorder<EntityKeyframe<Entity>,Entity> {
         public DefaultEntityRecorder(@NotNull JsonObject data) {
-            super(data, (level, uuid) -> null);
+            super(data, DEFAULT_ENTITY_GETTER);
         }
         @Override
         protected @Nullable EntityKeyframe<Entity> readKeyframe(@NotNull JsonObject keyframe) {
@@ -28,7 +31,7 @@ public class MoreRecorders {
             return new EntityKeyframe<>();
         }
         public DefaultEntityRecorder(@NotNull Entity entity, int recordRate) {
-            super(entity, recordRate, (level, uuid) -> null);
+            super(entity, recordRate, DEFAULT_ENTITY_GETTER);
         }
     }
     public static abstract class AbstractLivingRec<K extends EntityKeyframe<E>, E extends LivingEntity> extends EntityRecorder<K, E> {
@@ -45,10 +48,10 @@ public class MoreRecorders {
     }
     public static class LivingRec extends AbstractLivingRec<EntityKeyframe<LivingEntity>, LivingEntity> {
         public LivingRec(@NotNull LivingEntity entity, int recordRate) {
-            super(entity, recordRate, (level, uuid) -> null);
+            super(entity, recordRate, DEFAULT_LIVING_GETTER);
         }
         public LivingRec(@NotNull JsonObject data) {
-            super(data, (level, uuid) -> null);
+            super(data, DEFAULT_LIVING_GETTER);
         }
         @Override
         protected @Nullable EntityKeyframe<LivingEntity> readKeyframe(@NotNull JsonObject keyframe) {
