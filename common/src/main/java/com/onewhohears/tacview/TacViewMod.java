@@ -10,6 +10,8 @@ import dev.architectury.utils.Env;
 public final class TacViewMod {
     public static final String MOD_ID = "tacview";
 
+    public static boolean isDHLoaded = false;
+
     public static void init() {
         TVCommonEventHandlers.init();
         EntityRecorders.registerDefaultRecorders();
@@ -17,5 +19,6 @@ public final class TacViewMod {
         if (Platform.getEnvironment() == Env.CLIENT) {
             TVClientEventHandlers.init();
         }
+        isDHLoaded = Platform.isModLoaded("distanthorizons");
     }
 }

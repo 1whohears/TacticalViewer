@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.common.core.EntityKeyframe;
 import com.onewhohears.tacview.common.core.EntityRecorder;
 import com.onewhohears.tacview.common.core.RecordingSession;
@@ -113,6 +114,8 @@ public class ClientPlayback {
         });
 
         // TODO render height map using distant horizons cache
+        int[][] heightMap = TVDependencySafety.getDHHeightMap(m.level, minBound, maxBound);
+
 
         stack.popPose();
     }
