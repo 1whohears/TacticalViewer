@@ -2,6 +2,7 @@ package com.onewhohears.tacview.common.entity;
 
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.tacview.client.core.ClientPlayback;
+import com.onewhohears.tacview.client.core.TVClientManager;
 import com.onewhohears.tacview.common.core.RecordingSession;
 import com.onewhohears.tacview.common.core.SessionManager;
 import net.minecraft.nbt.CompoundTag;
@@ -43,7 +44,12 @@ public class TacViewEntity extends Entity {
     }
 
     protected void fixTick(@Nullable RecordingSession session) {
-        if (session == null) return;
+        if (session == null) {
+            if (UtilEntity.getLevel(this).isClientSide()) {
+                TVClientManager.get().requestRecordingSessionFromServer(getSessionId());
+            }
+            return;
+        }
         long tick = getPlaybackTick();
         long start = session.getSessionStartTime();
         if (tick < start) {
