@@ -3,10 +3,15 @@ package com.onewhohears.tacview.common.core;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.ibm.icu.impl.Pair;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilParse;
+import com.onewhohears.onewholibs.util.math.QuaternionF;
+import com.onewhohears.onewholibs.util.math.Vec3f;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,15 +44,21 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     }
 
     public Pair<K,K> findSurroundingKeyframes(long gameTime) {
-        if (keyframes.isEmpty())
+        if (keyframes.isEmpty()) {
             return Pair.of(lerpKeyframe, lerpKeyframe);
-        if (keyframes.size() == 1 || gameTime <= keyframes.get(0).tick)
+        }
+        if (keyframes.size() == 1 || gameTime <= keyframes.get(0).tick) {
             return Pair.of(keyframes.get(0), keyframes.get(0));
-        if (gameTime >= keyframes.get(0).tick)
-            return Pair.of(keyframes.get(0), keyframes.get(0));
-        for (int i = 1; i < keyframes.size(); ++i)
-            if (gameTime <= keyframes.get(i).tick)
-                return Pair.of(keyframes.get(i-1), keyframes.get(i));
+        }
+        int maxIndex = keyframes.size() - 1;
+        if (gameTime >= keyframes.get(maxIndex).tick) {
+            return Pair.of(keyframes.get(maxIndex), keyframes.get(maxIndex));
+        }
+        for (int i = 0; i < keyframes.size()-1; ++i) {
+            if (gameTime >= keyframes.get(i).tick && gameTime < keyframes.get(i+1).tick) {
+                return Pair.of(keyframes.get(i), keyframes.get(i+1));
+            }
+        }
         return Pair.of(lerpKeyframe, lerpKeyframe);
     }
 
@@ -140,6 +151,12 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     protected abstract K emptyKeyframe();
     protected boolean shouldRecord(@NotNull E entity) {
         return !entity.isRemoved();
+    }
+
+    public void onRender(@NotNull E entity, PoseStack stack, float yaw, @NotNull Vec3 renderPos,
+                            float partialTick, MultiBufferSource buffer, int packedLight) {
+        QuaternionF yawQ = Vec3f.YN.rotationDegrees(yaw);
+        stack.rotateAround(yawQ.convert(), (float) renderPos.x, (float) renderPos.y, (float) renderPos.z);
     }
 
 }
