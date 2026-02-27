@@ -22,7 +22,6 @@ public abstract class KeyframeValue<T, E extends Entity> {
     }
     public void readFromEntity(E entity) {
         value = entityReader.apply(entity);
-        System.out.println("Read Value "+name+" = "+value);
     }
     public void setEntity(E entity) {
         entitySetter.accept(entity, value);
@@ -81,7 +80,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
         @Override
         public void setToLerp(Long start, Long end, float partial) {
-            value = (long) ((end - get()) * partial + get());
+            value = (long) ((end - start) * partial + start);
         }
     }
 
@@ -107,7 +106,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
         @Override
         public void setToLerp(Float start, Float end, float partial) {
-            value = (end - get()) * partial + get();
+            value = (end - start) * partial + start;
         }
     }
 
@@ -133,7 +132,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
         @Override
         public void setToLerp(Vec3 start, Vec3 end, float partial) {
-            value = get().lerp(end, partial);
+            value = start.lerp(end, partial);
         }
     }
 
