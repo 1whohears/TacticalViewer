@@ -135,7 +135,7 @@ public class ClientPlayback {
                 return null;
             }
         }
-        // TODO optional addition entity setup
+        recorder.onPlaybackEntitySetup(e);
         fakeEntities.put(uuid, e);
         return e;
     }

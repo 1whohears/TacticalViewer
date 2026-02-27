@@ -170,4 +170,8 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         entity.yRotO = entity.getYRot();
     }
 
+    public void onPlaybackEntitySetup(@NotNull E entity) {
+
+    }
+
 }
