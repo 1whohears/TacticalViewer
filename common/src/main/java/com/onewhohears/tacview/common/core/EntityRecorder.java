@@ -166,6 +166,8 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         entity.xOld = entity.getX();
         entity.yOld = entity.getY();
         entity.zOld = entity.getZ();
+        entity.xRotO = entity.getXRot();
+        entity.yRotO = entity.getYRot();
     }
 
 }
