@@ -174,9 +174,9 @@ public class RecordingSession {
         if (pos.x < minBound.x) minBound = minBound.multiply(0, 1, 1).add(pos.x, 0, 0);
         if (pos.y < minBound.y) minBound = minBound.multiply(1, 0, 1).add(0, pos.y, 0);
         if (pos.z < minBound.z) minBound = minBound.multiply(1, 1, 0).add(0, 0, pos.z);
-        if (pos.x > maxBound.x) minBound = minBound.multiply(0, 1, 1).add(pos.x, 0, 0);
-        if (pos.y > maxBound.y) minBound = minBound.multiply(1, 0, 1).add(0, pos.y, 0);
-        if (pos.z > maxBound.z) minBound = minBound.multiply(1, 1, 0).add(0, 0, pos.z);
+        if (pos.x > maxBound.x) maxBound = maxBound.multiply(0, 1, 1).add(pos.x, 0, 0);
+        if (pos.y > maxBound.y) maxBound = maxBound.multiply(1, 0, 1).add(0, pos.y, 0);
+        if (pos.z > maxBound.z) maxBound = maxBound.multiply(1, 1, 0).add(0, 0, pos.z);
     }
 
 }
