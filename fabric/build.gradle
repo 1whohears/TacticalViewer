@@ -71,6 +71,8 @@ dependencies {
 
     modApi "com.onewhohears.onewholibs:onewholibs-fabric-$rootProject.minecraft_version:$rootProject.onewholibs_version"
 
+    modRuntimeOnly "maven.modrinth:DistantHorizons:$rootProject.distanthorizons_version"
+
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 }
