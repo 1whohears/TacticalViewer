@@ -11,7 +11,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TacViewEntity extends Entity {
 
@@ -29,30 +29,11 @@ public class TacViewEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
-        if (!UtilEntity.getLevel(this).isClientSide()) serverTick();
-    }
-
-    /**
-     * SERVER SIDE ONLY
-     */
-    protected void serverTick() {
-        if (!hasSession()) return;
         RecordingSession session = SessionManager.get().getSession(getSessionId());
-        if (session == null) return;
-        tickSession(session);
-    }
-
-    /**
-     * SERVER SIDE ONLY
-     */
-    protected void tickSession(@NotNull RecordingSession session) {
         controlTime(session);
     }
 
-    /**
-     * SERVER SIDE ONLY
-     */
-    protected void controlTime(@NotNull RecordingSession session) {
+    protected void controlTime(@Nullable RecordingSession session) {
         if (isPaused()) {
             fixTick(session);
             return;
@@ -61,7 +42,8 @@ public class TacViewEntity extends Entity {
         fixTick(session);
     }
 
-    protected void fixTick(@NotNull RecordingSession session) {
+    protected void fixTick(@Nullable RecordingSession session) {
+        if (session == null) return;
         long tick = getPlaybackTick();
         long start = session.getSessionStartTime();
         if (tick < start) {

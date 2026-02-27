@@ -62,11 +62,11 @@ public class ClientPlayback {
         Vec3 center = minBound.add(size.scale(0.5));
 
         Minecraft m = Minecraft.getInstance();
-        Vec3 camPos = m.gameRenderer.getMainCamera().getPosition();
 
         float scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
 
         stack.pushPose();
+        stack.scale(scale, scale, scale);
 
         session.forEachRecorder((uuid, recorder) -> {
             stack.pushPose();
@@ -79,23 +79,14 @@ public class ClientPlayback {
 
             try {
                 EntityKeyframe keyframe = recorder.interpolate(tick, pt);
-
                 keyframe.writeToFakeEntity(fake);
 
-                // TODO optional additional render logic
-
                 float f = fake.getYRot();
-                double dx = Mth.lerp(partialTick, fake.xOld, fake.getX());
-                double dy = Mth.lerp(partialTick, fake.yOld, fake.getY());
-                double dz = Mth.lerp(partialTick, fake.zOld, fake.getZ());
+                Vec3 d = fake.position().subtract(center);
 
-                Vec3 d = new Vec3(dx, dy, dz).subtract(center).scale(scale).subtract(camPos);
+                recorder.onRender(fake, stack, f, d, partialTick, buffer, packedLight);
 
-                stack.scale(scale, scale, scale);
-
-                m.getEntityRenderDispatcher().render(
-                        fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight
-                );
+                m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
             } catch (ReportedException e) {
                 banEntityType(entityTypeStr, e.getReport().getFriendlyReport());
             }

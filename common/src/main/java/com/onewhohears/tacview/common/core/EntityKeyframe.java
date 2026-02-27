@@ -131,8 +131,8 @@ public class EntityKeyframe<E extends Entity> {
     public static float calcPartial(long startTick, long endTick, long gameTime, float partialTick) {
         if (gameTime < startTick) return 0;
         else if (gameTime >= endTick) return 1;
-        long length = endTick - startTick;
-        return (gameTime - startTick + partialTick) / length;
+        float length = endTick - startTick;
+        return (gameTime + partialTick - startTick) / length;
     }
 
 }
