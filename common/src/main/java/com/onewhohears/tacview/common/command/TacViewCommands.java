@@ -98,6 +98,10 @@ public class TacViewCommands {
                                 )
                         )
                 )
+                // TODO pause command
+                // TODO unpause command
+                // TODO restart command
+                // TODO step (+/- ticks) command
                 .then(Commands.literal("create_viewer")
                         .executes(ctx -> createViewer(ctx.getSource(),
                                 null, -1, -1

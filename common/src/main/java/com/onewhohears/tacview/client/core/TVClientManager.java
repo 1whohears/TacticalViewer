@@ -15,7 +15,7 @@ public class TVClientManager {
     private final Map<String, RequestedSessionData> requestedSessions = new HashMap<>();
 
     public void tick() {
-
+        // TODO use hotkeys to manipulate the replay
     }
 
     /**
