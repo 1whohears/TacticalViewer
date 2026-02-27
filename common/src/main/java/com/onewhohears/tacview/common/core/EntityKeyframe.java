@@ -19,7 +19,7 @@ public class EntityKeyframe<E extends Entity> {
 
     public final Map<String, KeyframeValue<Object,E>> values = new HashMap<>();
 
-    public final KeyframeValue.Vec3V<E> pos = registerVec3Value("pos", Entity::position, Entity::moveTo);
+    public final KeyframeValue.Vec3V<E> pos = registerVec3Value("pos", Entity::position, Entity::setPos);
     public final KeyframeValue.Vec3V<E> vel = registerVec3Value("vel", entity -> {
         if (entity.onGround()) return entity.getDeltaMovement().multiply(1, 0, 1);
         else return entity.getDeltaMovement();

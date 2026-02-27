@@ -2,6 +2,7 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,11 @@ public class MoreRecorders {
         @Override
         protected boolean shouldRecord(@NotNull LivingEntity entity) {
             return !entity.isRemoved() && entity.getHealth() > 0;
+        }
+        @Override
+        public void onPlaybackTick(@NotNull LivingEntity entity) {
+            entity.calculateEntityAnimation(false);
+            super.onPlaybackTick((E) entity);
         }
     }
     public static class LivingRec extends AbstractLivingRec<EntityKeyframe<LivingEntity>, LivingEntity> {

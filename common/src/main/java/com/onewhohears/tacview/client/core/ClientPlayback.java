@@ -39,6 +39,27 @@ public class ClientPlayback {
     /**
      * CLIENT SIDE ONLY
      */
+    public void tick() {
+        String sessionId = parent.getSessionId();
+        RecordingSession session = SessionManager.get().getSession(sessionId);
+        if (session == null || !session.isRecordingComplete()) {
+            TVClientManager.get().requestRecordingSessionFromServer(sessionId);
+            return;
+        }
+        session.forEachRecorder((uuid, recorder) -> {
+            String entityTypeStr = recorder.entityType.get();
+            if (bannedEntityTypes.contains(entityTypeStr)) return;
+
+            Entity fake = getCreateFakeEntity(uuid, entityTypeStr, recorder);
+            if (fake == null) return;
+
+            recorder.onPlaybackTick(fake);
+        });
+    }
+
+    /**
+     * CLIENT SIDE ONLY
+     */
     public void render(float yaw, float partialTick, PoseStack stack, MultiBufferSource buffer, int packedLight) {
         String sessionId = parent.getSessionId();
         RecordingSession session = SessionManager.get().getSession(sessionId);
@@ -82,7 +103,7 @@ public class ClientPlayback {
                 float f = fake.getYRot();
                 Vec3 d = fake.position().subtract(center);
 
-                recorder.onRender(fake, stack, f, d, partialTick, buffer, packedLight);
+                recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
 
                 m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
             } catch (ReportedException e) {

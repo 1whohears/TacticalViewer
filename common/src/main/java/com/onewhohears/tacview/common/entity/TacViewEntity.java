@@ -34,14 +34,15 @@ public class TacViewEntity extends Entity {
     public void tick() {
         super.tick();
         RecordingSession session = SessionManager.get().getSession(getSessionId());
-        if (session == null && !UtilEntity.getLevel(this).isClientSide()
-                && !alreadyCheckedSession.equals(getSessionId())) {
+        boolean isClientSide = UtilEntity.getLevel(this).isClientSide();
+        if (session == null && !isClientSide && !alreadyCheckedSession.equals(getSessionId())) {
             SessionManager.get().readSessionData(getSessionId(), msg -> {});
             alreadyCheckedSession = getSessionId();
             session = SessionManager.get().getSession(getSessionId());
             resetReplay();
         }
         controlTime(session);
+        if (isClientSide) playback.tick();
     }
 
     protected void controlTime(@Nullable RecordingSession session) {

@@ -153,10 +153,19 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         return !entity.isRemoved();
     }
 
-    public void onRender(@NotNull E entity, PoseStack stack, float yaw, @NotNull Vec3 renderPos,
-                            float partialTick, MultiBufferSource buffer, int packedLight) {
+    public void onPlaybackRender(@NotNull E entity, PoseStack stack, float yaw, @NotNull Vec3 renderPos,
+                                 float partialTick, MultiBufferSource buffer, int packedLight) {
         QuaternionF yawQ = Vec3f.YN.rotationDegrees(yaw);
         stack.rotateAround(yawQ.convert(), (float) renderPos.x, (float) renderPos.y, (float) renderPos.z);
+    }
+
+    public void onPlaybackTick(@NotNull E entity) {
+        entity.xo = entity.getX();
+        entity.yo = entity.getY();
+        entity.zo = entity.getZ();
+        entity.xOld = entity.getX();
+        entity.yOld = entity.getY();
+        entity.zOld = entity.getZ();
     }
 
 }
