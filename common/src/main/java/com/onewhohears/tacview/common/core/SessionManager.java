@@ -140,8 +140,8 @@ public class SessionManager {
 
     public boolean stopRecording(@NotNull String sessionId, @NotNull ServerLevel level,
                                  @NotNull Consumer<String> debug) {
-        if (SESSIONS.containsKey(sessionId)) {
-            debug.accept("Could not stop recording session "+sessionId+" because it was already loaded!");
+        if (!SESSIONS.containsKey(sessionId)) {
+            debug.accept("Could not stop recording session "+sessionId+" because it is not loaded!");
             return false;
         }
         RecordingSession session = SESSIONS.get(sessionId);
