@@ -77,6 +77,9 @@ public class ClientPlayback {
             return;
         }
 
+        Minecraft m = Minecraft.getInstance();
+        m.getProfiler().push("Tac View Replay Render");
+
         float width = parent.getWidth();
         float height = parent.getHeight();
         long tick = parent.getPlaybackTick();
@@ -91,10 +94,10 @@ public class ClientPlayback {
         float scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
         Vec3 center = minBound.add(size.multiply(0.5, 0, 0.5));
 
-        Minecraft m = Minecraft.getInstance();
-
         stack.pushPose();
         stack.scale(scale, scale, scale);
+
+        m.getProfiler().push("Tac View Replay Render Entities");
 
         session.forEachRecorder((uuid, recorder) -> {
             stack.pushPose();
@@ -121,12 +124,15 @@ public class ClientPlayback {
             stack.popPose();
         });
 
+        m.getProfiler().pop();
+
         if (TacViewMod.isDHLoaded) {
             stack.translate(0, 0.01f / scale, 0);
-            //long timePre = System.currentTimeMillis();
             // TODO cache height map and other optimizations
-            // TODO fix wack spikes and dips in the height map
+            m.getProfiler().push("Tac View Replay Gen Height Map");
             int[][] heightMap = TVDependencySafety.getDHHeightMap(m.level, minBound, maxBound);
+            m.getProfiler().pop();
+            m.getProfiler().push("Tac View Replay Render Terrain");
             VertexConsumer consumer = buffer.getBuffer(RenderType.debugQuads());
             int minX = (int) (minBound.x - center.x), minZ = (int) (minBound.z - center.z);
             float minY = m.level.getMinBuildHeight(), maxY = m.level.getMaxBuildHeight();
@@ -154,13 +160,12 @@ public class ClientPlayback {
                     }
 
                     stack.popPose();
+                    m.getProfiler().pop();
                 }
             }
-            //long timePost = System.currentTimeMillis();
-            //System.out.println("map render time "+(timePost-timePre)+" "+heightMap.length);
         }
-
         stack.popPose();
+        m.getProfiler().pop();
     }
 
     @Nullable
