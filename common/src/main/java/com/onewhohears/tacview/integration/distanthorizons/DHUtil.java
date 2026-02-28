@@ -20,7 +20,7 @@ public class DHUtil {
         if (!levelWrappers.iterator().hasNext()) return heightMap;
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
-        int yPos = (int) minBound.y;
+        int yPos = (int) maxBound.y;
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
                 int xPos = (int) (minBound.x + x);
@@ -28,9 +28,10 @@ public class DHUtil {
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 if (!point.success) continue;
-                heightMap[x][z] = point.payload.topYBlockPos;
-                if (point.payload.topYBlockPos >= levelWrapper.getMaxHeight()) {
+                if (point.payload.topYBlockPos > 200) {
                     heightMap[x][z] = point.payload.bottomYBlockPos;
+                } else {
+                    heightMap[x][z] = point.payload.topYBlockPos;
                 }
             }
         }
