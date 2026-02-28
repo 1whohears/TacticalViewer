@@ -129,24 +129,26 @@ public class ClientPlayback {
             int[][] heightMap = TVDependencySafety.getDHHeightMap(m.level, minBound, maxBound);
             VertexConsumer consumer = buffer.getBuffer(RenderType.debugQuads());
             int minX = (int) (minBound.x - center.x), minZ = (int) (minBound.z - center.z);
+            float minY = m.level.getMinBuildHeight(), maxY = m.level.getMaxBuildHeight();
             for (int x = 0; x < heightMap.length; ++x) {
                 for (int z = 0; z < heightMap[x].length; ++z) {
                     int h = (int) (heightMap[x][z] - center.y);
+                    int green = (int) Math.min((heightMap[x][z] - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF);
                     stack.pushPose();
                     stack.translate(minX + x, h, minZ + z);
-                    drawTopSquare(stack, consumer, packedLight, 1, RED, GREEN + h * 4, BLUE);
+                    drawTopSquare(stack, consumer, packedLight, 1, RED, green, BLUE);
 
                     if (x < heightMap.length - 1 && heightMap[x + 1][z] != heightMap[x][z]) {
                         stack.pushPose();
                         stack.translate(1, 0, 0);
-                        drawXSquare(stack, consumer, packedLight, 1, RED, GREEN + h * 4, BLUE,
+                        drawXSquare(stack, consumer, packedLight, 1, RED, green, BLUE,
                                 heightMap[x + 1][z] - heightMap[x][z]);
                         stack.popPose();
                     }
                     if (z < heightMap[x].length - 1 && heightMap[x][z + 1] != heightMap[x][z]) {
                         stack.pushPose();
                         stack.translate(0, 0, 1);
-                        drawZSquare(stack, consumer, packedLight, 1, RED, GREEN + h * 4, BLUE,
+                        drawZSquare(stack, consumer, packedLight, 1, RED, green, BLUE,
                                 heightMap[x][z + 1] - heightMap[x][z]);
                         stack.popPose();
                     }
