@@ -97,10 +97,56 @@ public class TacViewCommands {
                                 )
                         )
                 )
-                // TODO pause command
-                // TODO unpause command
-                // TODO restart command
-                // TODO step (+/- ticks) command
+                .then(Commands.literal("pause")
+                        .executes(ctx -> pauseReplay(ctx.getSource(),
+                                null, true
+                        ))
+                        .then(Commands.argument("viewer_entity", EntityArgument.entity())
+                                .executes(ctx -> pauseReplay(ctx.getSource(),
+                                        EntityArgument.getEntity(ctx, "viewer_entity")
+                                                instanceof TacViewEntity viewer ? viewer : null,
+                                        true
+                                ))
+                        )
+                )
+                .then(Commands.literal("resume")
+                        .executes(ctx -> pauseReplay(ctx.getSource(),
+                                null, false
+                        ))
+                        .then(Commands.argument("viewer_entity", EntityArgument.entity())
+                                .executes(ctx -> pauseReplay(ctx.getSource(),
+                                        EntityArgument.getEntity(ctx, "viewer_entity")
+                                                instanceof TacViewEntity viewer ? viewer : null,
+                                        false
+                                ))
+                        )
+                )
+                .then(Commands.literal("restart")
+                        .executes(ctx -> restartReplay(ctx.getSource(), null))
+                        .then(Commands.argument("viewer_entity", EntityArgument.entity())
+                                .executes(ctx -> restartReplay(ctx.getSource(),
+                                        EntityArgument.getEntity(ctx, "viewer_entity")
+                                                instanceof TacViewEntity viewer ? viewer : null
+                                ))
+                        )
+                )
+                .then(Commands.literal("step")
+                        .executes(ctx -> stepReplay(ctx.getSource(),
+                                null, 1
+                        ))
+                        .then(Commands.argument("ticks", IntegerArgumentType.integer())
+                                .executes(ctx -> stepReplay(ctx.getSource(),
+                                        null, IntegerArgumentType.getInteger(ctx, "ticks")
+                                ))
+                                .then(Commands.argument("viewer_entity", EntityArgument.entity())
+                                        .executes(ctx -> stepReplay(ctx.getSource(),
+                                                EntityArgument.getEntity(ctx, "viewer_entity")
+                                                        instanceof TacViewEntity viewer ? viewer : null,
+                                                IntegerArgumentType.getInteger(ctx, "ticks")
+                                        ))
+                                )
+                        )
+                )
                 .then(Commands.literal("create_viewer")
                         .executes(ctx -> createViewer(ctx.getSource(),
                                 null, -1, -1
@@ -152,22 +198,49 @@ public class TacViewCommands {
         return result ? 1 : 0;
     }
 
+    private int stepReplay(@NotNull CommandSourceStack source, @Nullable TacViewEntity entity, int steps) {
+        entity = fixViewEntity(source, entity);
+        if (entity == null) return 0;
+        entity.tickStep(steps);
+        return 1;
+    }
+
+    private int restartReplay(@NotNull CommandSourceStack source, @Nullable TacViewEntity entity) {
+        entity = fixViewEntity(source, entity);
+        if (entity == null) return 0;
+        entity.resetReplay();
+        return 1;
+    }
+
+    private int pauseReplay(@NotNull CommandSourceStack source, @Nullable TacViewEntity entity, boolean pause) {
+        entity = fixViewEntity(source, entity);
+        if (entity == null) return 0;
+        entity.setPaused(pause);
+        return 1;
+    }
+
     private int watchReplay(@NotNull CommandSourceStack source, @NotNull String sessionId,
                             @Nullable TacViewEntity entity) {
-        if (entity == null) {
-            AABB aabb = AABB.ofSize(source.getPosition(), 1, 1, 1).inflate(32);
-            List<TacViewEntity> viewers = source.getLevel().getEntitiesOfClass(TacViewEntity.class, aabb);
-            if (viewers.isEmpty()) {
-                source.sendFailure(UtilMCText.literal("No viewer entities within 32 blocks found"));
-                return 0;
-            }
-            entity = findClosestEntity(source.getPosition(), viewers);
-        }
+        entity = fixViewEntity(source, entity);
+        if (entity == null) return 0;
         AtomicReference<String> msg = new AtomicReference<>();
         boolean result = SessionManager.get().watchReplay(entity, sessionId, msg::set);
         if (result) source.sendSuccess(() -> UtilMCText.literal(msg.get()), true);
         else source.sendFailure(UtilMCText.literal(msg.get()));
         return result ? 1 : 0;
+    }
+
+    private static TacViewEntity fixViewEntity(@NotNull CommandSourceStack source, @Nullable TacViewEntity entity) {
+        if (entity == null) {
+            AABB aabb = AABB.ofSize(source.getPosition(), 1, 1, 1).inflate(32);
+            List<TacViewEntity> viewers = source.getLevel().getEntitiesOfClass(TacViewEntity.class, aabb);
+            if (viewers.isEmpty()) {
+                source.sendFailure(UtilMCText.literal("No viewer entities within 32 blocks found"));
+                return null;
+            }
+            return findClosestEntity(source.getPosition(), viewers);
+        }
+        return entity;
     }
 
     private static TacViewEntity findClosestEntity(Vec3 pos, List<TacViewEntity> entities) {
