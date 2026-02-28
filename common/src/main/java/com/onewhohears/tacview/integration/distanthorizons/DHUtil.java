@@ -29,6 +29,9 @@ public class DHUtil {
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 if (!point.success) continue;
                 heightMap[x][z] = point.payload.topYBlockPos;
+                if (point.payload.topYBlockPos >= levelWrapper.getMaxHeight()) {
+                    heightMap[x][z] = point.payload.bottomYBlockPos;
+                }
             }
         }
         return heightMap;
