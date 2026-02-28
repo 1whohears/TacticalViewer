@@ -2,9 +2,11 @@ package com.onewhohears.tacview.client.core;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.tacview.TVDependencySafety;
+import com.onewhohears.tacview.TacViewMod;
 import com.onewhohears.tacview.common.core.EntityKeyframe;
 import com.onewhohears.tacview.common.core.EntityRecorder;
 import com.onewhohears.tacview.common.core.RecordingSession;
@@ -15,11 +17,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -27,6 +33,8 @@ import java.util.*;
 public class ClientPlayback {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+
+    private static final int RED = 0x22, GREEN = 0x99, BLUE = 0x22;
 
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
@@ -113,9 +121,42 @@ public class ClientPlayback {
             stack.popPose();
         });
 
-        // TODO render height map using distant horizons cache
-        int[][] heightMap = TVDependencySafety.getDHHeightMap(m.level, minBound, maxBound);
+        if (TacViewMod.isDHLoaded) {
+            stack.translate(0, 0.01f / scale, 0);
+            //long timePre = System.currentTimeMillis();
+            // TODO cache height map and other optimizations
+            // TODO fix wack spikes and dips in the height map
+            int[][] heightMap = TVDependencySafety.getDHHeightMap(m.level, minBound, maxBound);
+            VertexConsumer consumer = buffer.getBuffer(RenderType.debugQuads());
+            int minX = (int) (minBound.x - center.x), minZ = (int) (minBound.z - center.z);
+            for (int x = 0; x < heightMap.length; ++x) {
+                for (int z = 0; z < heightMap[x].length; ++z) {
+                    int h = (int) (heightMap[x][z] - center.y);
+                    stack.pushPose();
+                    stack.translate(minX + x, h, minZ + z);
+                    drawTopSquare(stack, consumer, packedLight, 1, RED, GREEN + h * 4, BLUE);
 
+                    if (x < heightMap.length - 1 && heightMap[x + 1][z] != heightMap[x][z]) {
+                        stack.pushPose();
+                        stack.translate(1, 0, 0);
+                        drawXSquare(stack, consumer, packedLight, 1, RED, GREEN + h * 4, BLUE,
+                                heightMap[x + 1][z] - heightMap[x][z]);
+                        stack.popPose();
+                    }
+                    if (z < heightMap[x].length - 1 && heightMap[x][z + 1] != heightMap[x][z]) {
+                        stack.pushPose();
+                        stack.translate(0, 0, 1);
+                        drawZSquare(stack, consumer, packedLight, 1, RED, GREEN + h * 4, BLUE,
+                                heightMap[x][z + 1] - heightMap[x][z]);
+                        stack.popPose();
+                    }
+
+                    stack.popPose();
+                }
+            }
+            //long timePost = System.currentTimeMillis();
+            //System.out.println("map render time "+(timePost-timePre)+" "+heightMap.length);
+        }
 
         stack.popPose();
     }
@@ -153,4 +194,106 @@ public class ClientPlayback {
                 "The error that would have crashed the game is the following:");
         LOGGER.error(reason);
     }
-}
+
+    private void drawXSquare(PoseStack poseStack, VertexConsumer consumer,
+                               int packedLight, float size, int red, int green, int blue, int height) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        consumer.vertex(matrix, 0, 0, 0)
+                .color(red, green, blue, 255)
+                .uv(0, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0, 0, size)
+                .color(red, green, blue, 255)
+                .uv(0, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0, height, size)
+                .color(red, green, blue, 255)
+                .uv(1, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0, height, 0)
+                .color(red, green, blue, 255)
+                .uv(1, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+    }
+
+    private void drawZSquare(PoseStack poseStack, VertexConsumer consumer,
+                             int packedLight, float size, int red, int green, int blue, int height) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        consumer.vertex(matrix, 0, 0, 0)
+                .color(red, green, blue, 255)
+                .uv(0, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, size, 0, 0)
+                .color(red, green, blue, 255)
+                .uv(0, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, size, height, 0)
+                .color(red, green, blue, 255)
+                .uv(1, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0, height, 0)
+                .color(red, green, blue, 255)
+                .uv(1, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+    }
+
+    private void drawTopSquare(PoseStack poseStack, VertexConsumer consumer,
+                               int packedLight, float size, int red, int green, int blue) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        consumer.vertex(matrix, 0, 0, 0)
+                .color(red, green, blue, 255)
+                .uv(0, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0, 0, size)
+                .color(red, green, blue, 255)
+                .uv(0, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, size, 0, size)
+                .color(red, green, blue, 255)
+                .uv(1, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, size, 0, 0)
+                .color(red, green, blue, 255)
+                .uv(1, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normalMatrix, 0, 1, 0)
+                .endVertex();
+        }
+    }

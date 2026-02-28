@@ -20,7 +20,7 @@ public class DHUtil {
         if (!levelWrappers.iterator().hasNext()) return heightMap;
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
-        int yPos = (int) maxBound.y;
+        int yPos = (int) minBound.y;
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
                 int xPos = (int) (minBound.x + x);
