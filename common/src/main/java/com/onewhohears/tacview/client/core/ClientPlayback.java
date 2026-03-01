@@ -35,11 +35,15 @@ public class ClientPlayback {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final int RED = 0x22, GREEN = 0x99, BLUE = 0x22;
+    private static final long HEIGHT_MAP_UPDATE_RATE = 4000;
 
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
 
     private final Set<String> bannedEntityTypes = new HashSet<>();
+
+    private int[][] heightMap = null;
+    private long heightMapUpdateTime = 0;
 
     public ClientPlayback(@NotNull TacViewEntity parent) {
         this.parent = parent;
@@ -127,10 +131,10 @@ public class ClientPlayback {
         m.getProfiler().pop();
 
         if (TacViewMod.isDHLoaded) {
+            int lod = 4; // TODO calculate lod based on total area
             stack.translate(0, 0.01f / scale, 0);
-            // TODO cache height map and other optimizations
             m.getProfiler().push("Tac View Replay Gen Height Map");
-            int[][] heightMap = TVDependencySafety.getDHHeightMap(m.level, minBound, maxBound);
+            updateHeightMap(m.level, minBound, maxBound, lod);
             m.getProfiler().pop();
             m.getProfiler().push("Tac View Replay Render Terrain");
             VertexConsumer consumer = buffer.getBuffer(RenderType.debugQuads());
@@ -141,31 +145,39 @@ public class ClientPlayback {
                     int h = (int) (heightMap[x][z] - center.y);
                     int green = (int) Math.min((heightMap[x][z] - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF);
                     stack.pushPose();
-                    stack.translate(minX + x, h, minZ + z);
-                    drawTopSquare(stack, consumer, packedLight, 1, RED, green, BLUE);
+                    stack.translate(minX + x * lod, h, minZ + z * lod);
+                    drawTopSquare(stack, consumer, packedLight, lod, RED, green, BLUE);
 
                     if (x < heightMap.length - 1 && heightMap[x + 1][z] != heightMap[x][z]) {
                         stack.pushPose();
-                        stack.translate(1, 0, 0);
-                        drawXSquare(stack, consumer, packedLight, 1, RED, green, BLUE,
+                        stack.translate(lod, 0, 0);
+                        drawXSquare(stack, consumer, packedLight, lod, RED, green, BLUE,
                                 heightMap[x + 1][z] - heightMap[x][z]);
                         stack.popPose();
                     }
                     if (z < heightMap[x].length - 1 && heightMap[x][z + 1] != heightMap[x][z]) {
                         stack.pushPose();
-                        stack.translate(0, 0, 1);
-                        drawZSquare(stack, consumer, packedLight, 1, RED, green, BLUE,
+                        stack.translate(0, 0, lod);
+                        drawZSquare(stack, consumer, packedLight, lod, RED, green, BLUE,
                                 heightMap[x][z + 1] - heightMap[x][z]);
                         stack.popPose();
                     }
 
                     stack.popPose();
-                    m.getProfiler().pop();
+
                 }
             }
+            m.getProfiler().pop();
         }
         stack.popPose();
         m.getProfiler().pop();
+    }
+
+    private void updateHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
+        if (heightMap == null || System.currentTimeMillis() - heightMapUpdateTime >= HEIGHT_MAP_UPDATE_RATE) {
+            heightMap = TVDependencySafety.getDHHeightMap(level, minBound, maxBound, lod);
+            heightMapUpdateTime = System.currentTimeMillis();
+        }
     }
 
     @Nullable

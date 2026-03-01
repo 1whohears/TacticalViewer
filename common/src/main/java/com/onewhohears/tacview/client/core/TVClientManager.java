@@ -16,6 +16,7 @@ public class TVClientManager {
 
     public void tick() {
         // TODO use hotkeys to manipulate the replay
+        // TODO view entity data when mouse points at them
     }
 
     /**

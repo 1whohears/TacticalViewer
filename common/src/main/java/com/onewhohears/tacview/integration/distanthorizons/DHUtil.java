@@ -10,12 +10,12 @@ import net.minecraft.world.phys.Vec3;
 
 public class DHUtil {
 
-    public static int[][] getHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound) {
+    public static int[][] getHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
         Iterable<IDhApiLevelWrapper> levelWrappers = DhApi.Delayed.worldProxy.getAllLoadedLevelsWithDimensionNameLike(
                 level.dimension().location().getPath());
 
         Vec3 size = maxBound.subtract(minBound);
-        int[][] heightMap = new int[(int)Math.ceil(size.x)][(int)Math.ceil(size.z)];
+        int[][] heightMap = new int[(int)Math.ceil(size.x / lod)][(int)Math.ceil(size.z / lod)];
 
         if (!levelWrappers.iterator().hasNext()) return heightMap;
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
@@ -23,8 +23,8 @@ public class DHUtil {
         int yPos = (int) maxBound.y;
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
-                int xPos = (int) (minBound.x + x);
-                int zPos = (int) (minBound.z + z);
+                int xPos = (int) (minBound.x + x * lod);
+                int zPos = (int) (minBound.z + z * lod);
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 if (!point.success) continue;

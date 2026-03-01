@@ -6,10 +6,10 @@ import net.minecraft.world.phys.Vec3;
 
 public class TVDependencySafety {
 
-    public static int[][] getDHHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound) {
-        if (TacViewMod.isDHLoaded) return DHUtil.getHeightMap(level, minBound, maxBound);
+    public static int[][] getDHHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
+        if (TacViewMod.isDHLoaded) return DHUtil.getHeightMap(level, minBound, maxBound, lod);
         Vec3 size = maxBound.subtract(minBound);
-        return new int[(int)Math.ceil(size.x)][(int)Math.ceil(size.z)];
+        return new int[(int)Math.ceil(size.x / lod)][(int)Math.ceil(size.z / lod)];
     }
 
 }
