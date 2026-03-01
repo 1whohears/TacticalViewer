@@ -1,6 +1,7 @@
 package com.onewhohears.tacview.client.core;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
@@ -102,33 +103,6 @@ public class ClientPlayback {
         stack.pushPose();
         stack.scale(scale, scale, scale);
 
-        m.getProfiler().push("Tac View Replay Render Entities");
-        session.forEachRecorder((uuid, recorder) -> {
-            stack.pushPose();
-
-            String entityTypeStr = recorder.entityType.get();
-            if (bannedEntityTypes.contains(entityTypeStr)) return;
-
-            Entity fake = getCreateFakeEntity(uuid, entityTypeStr, recorder);
-            if (fake == null) return;
-
-            try {
-                EntityKeyframe keyframe = recorder.interpolate(tick, pt);
-                keyframe.writeToFakeEntity(fake);
-
-                float f = fake.getYRot();
-                Vec3 d = fake.position().subtract(center);
-
-                recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
-                // TODO fix entity name tag rendering
-                m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
-            } catch (ReportedException e) {
-                banEntityType(entityTypeStr, e.getReport().getFriendlyReport());
-            }
-            stack.popPose();
-        });
-        m.getProfiler().pop();
-
         if (TacViewMod.isDHLoaded) {
             int lod = (int) Math.ceil(Math.sqrt(size.x * size.z * MAX_TILES_INV));
             stack.translate(0, 0.01f / scale, 0);
@@ -163,11 +137,39 @@ public class ClientPlayback {
                     }
 
                     stack.popPose();
-
                 }
             }
             m.getProfiler().pop();
         }
+
+        m.getProfiler().push("Tac View Replay Render Entities");
+        session.forEachRecorder((uuid, recorder) -> {
+            stack.pushPose();
+
+            String entityTypeStr = recorder.entityType.get();
+            if (bannedEntityTypes.contains(entityTypeStr)) return;
+
+            Entity fake = getCreateFakeEntity(uuid, entityTypeStr, recorder);
+            if (fake == null) return;
+
+            try {
+                EntityKeyframe keyframe = recorder.interpolate(tick, pt);
+                keyframe.writeToFakeEntity(fake);
+
+                float f = fake.getYRot();
+                Vec3 d = fake.position().subtract(center);
+
+                recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
+                // TODO fix entity name tag rendering
+                // TODO fix entities rendering under the height map
+                m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
+            } catch (ReportedException e) {
+                banEntityType(entityTypeStr, e.getReport().getFriendlyReport());
+            }
+            stack.popPose();
+        });
+        m.getProfiler().pop();
+
         stack.popPose();
         m.getProfiler().pop();
     }
