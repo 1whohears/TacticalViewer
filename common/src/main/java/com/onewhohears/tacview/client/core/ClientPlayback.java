@@ -36,7 +36,7 @@ public class ClientPlayback {
 
     private static final int RED = 0x22, GREEN = 0x99, BLUE = 0x22;
     private static final long HEIGHT_MAP_UPDATE_RATE = 4000;
-    private static final double MAX_TILES_INV = 1d / 4096d;
+    private static final double MAX_TILES_INV = 1d / 10000d;
 
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
@@ -103,7 +103,6 @@ public class ClientPlayback {
         stack.scale(scale, scale, scale);
 
         m.getProfiler().push("Tac View Replay Render Entities");
-
         session.forEachRecorder((uuid, recorder) -> {
             stack.pushPose();
 
@@ -121,14 +120,13 @@ public class ClientPlayback {
                 Vec3 d = fake.position().subtract(center);
 
                 recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
-
+                // TODO fix entity name tag rendering
                 m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
             } catch (ReportedException e) {
                 banEntityType(entityTypeStr, e.getReport().getFriendlyReport());
             }
             stack.popPose();
         });
-
         m.getProfiler().pop();
 
         if (TacViewMod.isDHLoaded) {
