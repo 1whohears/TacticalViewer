@@ -36,6 +36,7 @@ public class ClientPlayback {
 
     private static final int RED = 0x22, GREEN = 0x99, BLUE = 0x22;
     private static final long HEIGHT_MAP_UPDATE_RATE = 4000;
+    private static final double MAX_TILES_INV = 1d / 4096d;
 
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
@@ -131,7 +132,7 @@ public class ClientPlayback {
         m.getProfiler().pop();
 
         if (TacViewMod.isDHLoaded) {
-            int lod = 4; // TODO calculate lod based on total area
+            int lod = (int) Math.ceil(Math.sqrt(size.x * size.z * MAX_TILES_INV));
             stack.translate(0, 0.01f / scale, 0);
             m.getProfiler().push("Tac View Replay Gen Height Map");
             updateHeightMap(m.level, minBound, maxBound, lod);
