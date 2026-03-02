@@ -13,10 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -41,7 +38,8 @@ public class RecordingSession {
         if (recordingComplete) return;
         long currentTime = level.getGameTime();
         if (sessionStartTime == -1) sessionStartTime = currentTime;
-        RECORDERS.forEach((uuid, recorder) -> recorder.tickRecord(this, level));
+        Iterator<Map.Entry<UUID,EntityRecorder>> it = RECORDERS.entrySet().iterator();
+        while (it.hasNext()) it.next().getValue().tickRecord(this, level); // do not use for loop or forEach
         length = Math.toIntExact(currentTime - sessionStartTime);
         if (currentTime - sessionStartTime >= maxLength) finishRecording(level, SessionManager.INFO);
     }
