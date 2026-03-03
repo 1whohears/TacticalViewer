@@ -3,9 +3,11 @@ package com.onewhohears.tacview.common.core;
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilParse;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -21,12 +23,10 @@ public class EntityRecorders {
     private static final EntityRecorderReader DEFAULT_RECORDER = MoreRecorders.DefaultEntityRecorder::new;
 
     public static void registerDefaultRecorders() {
-        registerEntityRecorder(EntityType.HORSE,
-                (entity, recordRate) -> new MoreRecorders.LivingRec((LivingEntity) entity, recordRate),
-                MoreRecorders.LivingRec::new);
         registerEntityRecorder(EntityType.PLAYER,
                 (entity, recordRate) -> new PlayerRecorder((Player) entity, recordRate),
                 PlayerRecorder::new);
+        registerAllLivingEntities();
     }
 
     public static void registerEntityRecorder(EntityType<?> type, EntityRecorderFactory factory, EntityRecorderReader reader) {
@@ -41,6 +41,21 @@ public class EntityRecorders {
         else recorder = RECORDER_FACTORIES.get(id).getLeft().create(entity, recordRate);
         recorder.readValuesFromEntityCast(entity);
         return recorder;
+    }
+
+    private static void registerAllLivingEntities() {
+        for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
+            String id = EntityType.getKey(type).toString();
+            if (!RECORDER_FACTORIES.containsKey(id) && type.getCategory() != MobCategory.MISC) {
+                registerLivingEntityRecorder(type);
+            }
+        }
+    }
+
+    private static void registerLivingEntityRecorder(EntityType<?> type) {
+        registerEntityRecorder(type,
+                (entity, recordRate) -> new MoreRecorders.LivingRec((LivingEntity) entity, recordRate),
+                MoreRecorders.LivingRec::new);
     }
 
     @Nullable
