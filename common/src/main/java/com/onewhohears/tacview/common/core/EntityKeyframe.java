@@ -24,8 +24,8 @@ public class EntityKeyframe<E extends Entity> {
         if (entity.onGround()) return entity.getDeltaMovement().multiply(1, 0, 1);
         else return entity.getDeltaMovement();
     }, Entity::setDeltaMovement);
-    public final KeyframeValue.FloatV<E> xRot = registerFloatValue("xRot", Entity::getXRot, Entity::setXRot);
-    public final KeyframeValue.FloatV<E> yRot = registerFloatValue("yRot", Entity::getYRot, Entity::setYRot);
+    public final KeyframeValue.FloatV<E> xRot = registerAngleValue("xRot", Entity::getXRot, Entity::setXRot);
+    public final KeyframeValue.FloatV<E> yRot = registerAngleValue("yRot", Entity::getYRot, Entity::setYRot);
     public final KeyframeValue.StringV<E> vehicleUUID = registerStringValue("vehicleUUID",
             entity -> entity.isPassenger() ? entity.getRootVehicle().getStringUUID() : "",
             (entity, value) -> {});
@@ -98,6 +98,11 @@ public class EntityKeyframe<E extends Entity> {
     protected KeyframeValue.FloatV<E> registerFloatValue(String name, Function<E, Float> entityReader,
                                                          BiConsumer<E, Float> entitySetter) {
         return registerValue(new KeyframeValue.FloatV<>(name, entityReader, entitySetter));
+    }
+
+    protected KeyframeValue.AngleV<E> registerAngleValue(String name, Function<E, Float> entityReader,
+                                                         BiConsumer<E, Float> entitySetter) {
+        return registerValue(new KeyframeValue.AngleV<>(name, entityReader, entitySetter));
     }
 
     protected KeyframeValue.Vec3V<E> registerVec3Value(String name, Function<E, Vec3> entityReader,

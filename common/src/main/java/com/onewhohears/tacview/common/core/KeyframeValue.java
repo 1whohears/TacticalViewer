@@ -2,6 +2,7 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilParse;
+import com.onewhohears.onewholibs.util.math.UtilAngles;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -107,6 +108,16 @@ public abstract class KeyframeValue<T, E extends Entity> {
         @Override
         public void setToLerp(Float start, Float end, float partial) {
             value = (end - start) * partial + start;
+        }
+    }
+
+    public static class AngleV<E extends Entity> extends FloatV<E> {
+        public AngleV(String name, Function<E, Float> entityReader, BiConsumer<E, Float> entitySetter) {
+            super(name, entityReader, entitySetter);
+        }
+        @Override
+        public void setToLerp(Float start, Float end, float partial) {
+            value = UtilAngles.lerpAngle(partial, start, end);
         }
     }
 
