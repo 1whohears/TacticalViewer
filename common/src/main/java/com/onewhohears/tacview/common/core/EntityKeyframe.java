@@ -28,9 +28,7 @@ public class EntityKeyframe<E extends Entity> {
     public final KeyframeValue.FloatV<E> yRot = registerFloatValue("yRot", Entity::getYRot, Entity::setYRot);
     public final KeyframeValue.StringV<E> vehicleUUID = registerStringValue("vehicleUUID",
             entity -> entity.isPassenger() ? entity.getRootVehicle().getStringUUID() : "",
-            (entity, value) -> {
-                // TODO make the player visually ride the vehicle in the replay
-            });
+            (entity, value) -> {/* TODO make the player visually ride the vehicle in the replay */});
 
     protected long tick;
 

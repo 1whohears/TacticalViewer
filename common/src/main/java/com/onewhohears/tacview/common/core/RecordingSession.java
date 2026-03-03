@@ -12,6 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -46,6 +47,11 @@ public class RecordingSession {
 
     public void forEachRecorder(BiConsumer<UUID,EntityRecorder> consumer) {
         RECORDERS.forEach(consumer);
+    }
+
+    @Nullable
+    public EntityRecorder getRecorder(UUID uuid) {
+        return RECORDERS.get(uuid);
     }
 
     public RecordingSession(@NotNull String sessionId, @NotNull Collection<? extends Entity> entities,
