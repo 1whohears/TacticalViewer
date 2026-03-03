@@ -168,6 +168,8 @@ public class ClientPlayback {
                 EntityKeyframe keyframe = recorder.interpolate(tick, pt);
                 keyframe.writeToFakeEntity(fake);
 
+                // TODO dont render if the entity died
+
                 float f = fake.getYRot();
                 Vec3 d = fake.position().subtract(center);
 

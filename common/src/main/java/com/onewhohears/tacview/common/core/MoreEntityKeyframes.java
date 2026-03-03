@@ -11,6 +11,8 @@ public class MoreEntityKeyframes {
     public static abstract class AbstractLivingEntityKeyframe<E extends LivingEntity> extends EntityKeyframe<E> {
         public final KeyframeValue.FloatV<E> health = registerFloatValue("health", LivingEntity::getHealth, LivingEntity::setHealth);
         public final KeyframeValue.EnumV<Pose,E> pose = registerEnumValue("pose", Entity::getPose, Entity::setPose, Pose.class);
+        // TODO fallFlying
+        // TODO main hand and off hand
         protected AbstractLivingEntityKeyframe() {
             super();
         }
@@ -33,6 +35,7 @@ public class MoreEntityKeyframes {
         }
     }
     public static class PlayerKeyframe extends AbstractLivingEntityKeyframe<Player> {
+        // TODO armor slots
         protected PlayerKeyframe() {
             super();
         }
