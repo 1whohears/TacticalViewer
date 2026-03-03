@@ -69,6 +69,18 @@ public class ClientPlayback {
             if (fake == null) return;
 
             recorder.onPlaybackTick(fake);
+
+            EntityKeyframe keyframe = recorder.interpolate(parent.getPlaybackTick(), 0);
+            if (!keyframe.vehicleUUID.get().isEmpty()) {
+                UUID vehicleUUID = UUID.fromString(keyframe.vehicleUUID.get());
+                EntityRecorder vehicleRecorder = session.getRecorder(vehicleUUID);
+                if (vehicleRecorder == null) return;
+                Entity vehicle = fakeEntities.get(vehicleUUID);
+                if (vehicle == null) return;
+                vehicleRecorder.onPlaybackVehicleTick(vehicle, fake);
+            } else if (fake.isPassenger()) {
+                fake.stopRiding();
+            }
         });
     }
 

@@ -170,6 +170,12 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         entity.yRotO = entity.getYRot();
     }
 
+    public void onPlaybackVehicleTick(@NotNull E vehicle, @NotNull Entity passenger) {
+        if (!passenger.isPassenger() || !passenger.getRootVehicle().equals(vehicle)) {
+            passenger.startRiding(vehicle, true);
+        }
+    }
+
     public void onPlaybackEntitySetup(@NotNull E entity) {
 
     }
