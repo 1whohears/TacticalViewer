@@ -24,8 +24,8 @@ public class UtilFile {
     }
 
     public static void printJsonAbsolutePath(String path, JsonObject json) {
-        int remove = path.lastIndexOf("/");
-        new File(path.substring(0, remove+1)).mkdirs();
+        Path p = Path.of(path).getParent().normalize();
+        new File(p.toUri()).mkdirs();
         try {
             Writer writer = new FileWriter(path);
             GSON.toJson(json, writer);
