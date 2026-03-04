@@ -50,6 +50,11 @@ public class MoreRecorders {
         public void onPlaybackTick(@NotNull LivingEntity entity) {
             entity.calculateEntityAnimation(false);
             super.onPlaybackTick((E) entity);
+            entity.yHeadRot = entity.getYRot();
+            entity.yHeadRotO = entity.getYRot();
+            float yBody = Mth.rotLerp(0.25f, entity.yBodyRot, entity.getYRot());
+            entity.yBodyRot = yBody;
+            entity.yBodyRotO = yBody;
         }
     }
     public static class LivingRec extends AbstractLivingRec<EntityKeyframe<LivingEntity>, LivingEntity> {

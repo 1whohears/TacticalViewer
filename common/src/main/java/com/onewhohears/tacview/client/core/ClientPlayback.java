@@ -174,8 +174,9 @@ public class ClientPlayback {
                 Vec3 d = fake.position().subtract(center);
 
                 recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
-                // TODO fix entity name tag rendering
+
                 // TODO fix entities rendering under the height map
+
                 m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
             } catch (ReportedException e) {
                 banEntityType(entityTypeStr, e.getReport().getFriendlyReport());
