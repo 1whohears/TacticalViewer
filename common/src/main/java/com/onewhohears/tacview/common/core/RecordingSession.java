@@ -37,16 +37,22 @@ public class RecordingSession {
 
     public void tickRecord(@NotNull ServerLevel level) {
         if (recordingComplete) return;
+        forEachRecorder((uuid, recorder) -> {
+            recorder.tickRecord(this, level);
+            if (sessionStartTime == -1) recorder.onRecordingStart(this);
+        });
         long currentTime = level.getGameTime();
         if (sessionStartTime == -1) sessionStartTime = currentTime;
-        Iterator<Map.Entry<UUID,EntityRecorder>> it = RECORDERS.entrySet().iterator();
-        while (it.hasNext()) it.next().getValue().tickRecord(this, level); // do not use for loop or forEach
         length = Math.toIntExact(currentTime - sessionStartTime);
         if (currentTime - sessionStartTime >= maxLength) finishRecording(level, SessionManager.INFO);
     }
 
     public void forEachRecorder(BiConsumer<UUID,EntityRecorder> consumer) {
-        RECORDERS.forEach(consumer);
+        Iterator<Map.Entry<UUID,EntityRecorder>> it = RECORDERS.entrySet().iterator();
+        while (it.hasNext()) { // do not use for loop or forEach because of risk of concurrent modification exception
+            Map.Entry<UUID,EntityRecorder> entry = it.next();
+            consumer.accept(entry.getKey(), entry.getValue());
+        }
     }
 
     @Nullable
@@ -143,6 +149,7 @@ public class RecordingSession {
         long currentTime = level.getGameTime();
         length = Math.toIntExact(currentTime - sessionStartTime);
         recordingComplete = true;
+        forEachRecorder((uuid, recorder) -> recorder.onRecordingFinish(this));
         SessionManager.get().saveSessionData(getSessionId(), SessionManager.INFO);
         debug.accept("Finished recording "+sessionId+"! The recording is "+length+" ticks long!");
         return true;

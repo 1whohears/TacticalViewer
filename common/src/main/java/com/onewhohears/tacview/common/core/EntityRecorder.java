@@ -180,4 +180,12 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
 
     }
 
+    public void onRecordingStart(@NotNull RecordingSession session) {
+
+    }
+
+    public void onRecordingFinish(@NotNull RecordingSession session) {
+
+    }
+
 }

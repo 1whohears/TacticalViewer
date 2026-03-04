@@ -1,6 +1,7 @@
 package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
+import com.onewhohears.onewholibs.util.UtilMCText;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.EntityGetter;
 import org.jetbrains.annotations.NotNull;
@@ -36,5 +37,23 @@ public class PlayerRecorder extends MoreRecorders.AbstractLivingRec<EntityKeyfra
     @Override
     protected EntityKeyframe<Player> emptyKeyframe() {
         return new MoreEntityKeyframes.PlayerKeyframe();
+    }
+
+    @Override
+    public void onRecordingStart(@NotNull RecordingSession session) {
+        super.onRecordingStart(session);
+        Player player = getEntity();
+        if (player == null) return;
+        player.sendSystemMessage(UtilMCText.literal("TACVIEW: You will be recorded in session "
+                +session.getSessionId()+" for the next "+session.getMaxLength()+" ticks!"));
+    }
+
+    @Override
+    public void onRecordingFinish(@NotNull RecordingSession session) {
+        super.onRecordingFinish(session);
+        Player player = getEntity();
+        if (player == null) return;
+        player.sendSystemMessage(UtilMCText.literal("TACVIEW: Session "+session.getSessionId()
+                +" has finished recording!"));
     }
 }
