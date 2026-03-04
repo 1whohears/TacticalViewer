@@ -80,7 +80,7 @@ public class SessionManager {
         int num = lastBigInteger(sessionId);
         if (num == -1) return getFixedSessionId(sessionId+"_1");
         int digits = (int) (Math.log10(num) + 1);
-        return sessionId.substring(0, sessionId.length()-digits) + (num+1);
+        return getFixedSessionId(sessionId.substring(0, sessionId.length()-digits) + (num+1));
     }
 
     public static int lastBigInteger(String s) {
