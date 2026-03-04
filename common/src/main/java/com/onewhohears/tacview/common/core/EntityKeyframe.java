@@ -63,7 +63,7 @@ public class EntityKeyframe<E extends Entity> {
     public static <K extends EntityKeyframe<E>, E extends Entity> void setToLerp(
             K lerpKeyframe, K start, K end, long gameTime, float partialTick) {
         float partial = calcPartial(start.tick, end.tick, gameTime, partialTick);
-        lerpKeyframe.tick = gameTime;
+        lerpKeyframe.tick = Math.min(gameTime, end.tick);
         lerpKeyframe.values.forEach((name, value) ->
                 value.setToLerp(start.values.get(name).get(), end.values.get(name).get(), partial)
         );

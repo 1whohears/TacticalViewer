@@ -1,7 +1,6 @@
 package com.onewhohears.tacview.client.core;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
@@ -166,18 +165,18 @@ public class ClientPlayback {
 
             try {
                 EntityKeyframe keyframe = recorder.interpolate(tick, pt);
-                keyframe.writeToFakeEntity(fake);
+                if (tick <= keyframe.getTick() + recorder.recordRate) {
+                    keyframe.writeToFakeEntity(fake);
 
-                // TODO dont render if the entity died
+                    float f = fake.getYRot();
+                    Vec3 d = fake.position().subtract(center);
 
-                float f = fake.getYRot();
-                Vec3 d = fake.position().subtract(center);
+                    recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
 
-                recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
+                    // TODO fix entities rendering under the height map
 
-                // TODO fix entities rendering under the height map
-
-                m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
+                    m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
+                }
             } catch (ReportedException e) {
                 banEntityType(entityTypeStr, e.getReport().getFriendlyReport());
             }
