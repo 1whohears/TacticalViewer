@@ -61,20 +61,36 @@ public class SessionManager {
     }
 
     public boolean startNewSession(@NotNull String sessionId, @NotNull Collection<? extends Entity> entities,
-                                   @NotNull ServerLevel level, int defaultRecordRate, int length,
+                                   @NotNull ServerLevel level, int defaultRecordRate, int length, boolean fixId,
                                    @NotNull Consumer<String> debug) {
-        if (SESSIONS.containsKey(sessionId)) {
-            debug.accept("Cannot start new session because a session with id "+sessionId+" already exists.");
-            return false;
-        }
-        if (UtilFile.doesFileExistGamePath(getSessionFileName(sessionId))) {
-            debug.accept("Cannot start new session because an unloaded session file with id "+sessionId+" already exists.");
+        if (fixId) {
+            sessionId = getFixedSessionId(sessionId);
+        } else if (sessionIdExists(sessionId)) {
+            debug.accept("Cannot start new session because a session with id " + sessionId + " already exists.");
             return false;
         }
         RecordingSession session = new RecordingSession(sessionId, entities, defaultRecordRate, length, level);
         SESSIONS.put(sessionId, session);
         debug.accept("Started new recording session "+sessionId+" it will end in "+length+" ticks!");
         return true;
+    }
+
+    public String getFixedSessionId(@NotNull String sessionId) {
+        if (!sessionIdExists(sessionId)) return sessionId;
+        int num = lastBigInteger(sessionId);
+        if (num == -1) return getFixedSessionId(sessionId+"_1");
+        int digits = (int) (Math.log10(num) + 1);
+        return sessionId.substring(0, sessionId.length()-digits) + (num+1);
+    }
+
+    public static int lastBigInteger(String s) {
+        if (s.isEmpty()) return -1;
+        int i = s.length();
+        while (i > 0 && Character.isDigit(s.charAt(i - 1))) {
+            i--;
+        }
+        if (i == s.length()) return -1;
+        return Integer.parseInt(s.substring(i));
     }
 
     public void tickRecord(@NotNull ServerLevel level) {
@@ -88,6 +104,10 @@ public class SessionManager {
 
     public Set<String> getLoadedSessionIds() {
         return SESSIONS.keySet();
+    }
+
+    public boolean sessionIdExists(@NotNull String sessionId) {
+        return SESSIONS.containsKey(sessionId) || UtilFile.doesFileExistGamePath(getSessionFileName(sessionId));
     }
 
     public Set<String> getUnloadedSessionIds() {

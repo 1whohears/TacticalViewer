@@ -28,7 +28,7 @@ public class TacViewCommands {
     public TacViewCommands(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("tacview").requires((stack) -> stack.hasPermission(2))
                 .then(Commands.literal("start")
-                        .then(Commands.argument("session_id", StringArgumentType.word()) // TODO auto name new recordings argument
+                        .then(Commands.argument("session_id", StringArgumentType.word())
                                 .then(Commands.argument("tracked_entities", EntityArgument.entities())
                                         .executes(ctx -> startRecording(
                                                 ctx.getSource(),
@@ -295,7 +295,7 @@ public class TacViewCommands {
                                int maxRecordTicks, int recordRate) {
         AtomicReference<String> msg = new AtomicReference<>();
         boolean result = SessionManager.get().startNewSession(sessionId, entities, source.getLevel(),
-                recordRate, maxRecordTicks, msg::set);
+                recordRate, maxRecordTicks, true, msg::set);
         if (result) source.sendSuccess(() -> UtilMCText.literal(msg.get()), true);
         else source.sendFailure(UtilMCText.literal(msg.get()));
         return result ? 1 : 0;
