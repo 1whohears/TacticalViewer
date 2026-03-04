@@ -1,9 +1,16 @@
 package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.onewhohears.onewholibs.util.JsonToNBTUtil;
+import com.onewhohears.onewholibs.util.UtilItem;
 import com.onewhohears.onewholibs.util.UtilParse;
 import com.onewhohears.onewholibs.util.math.UtilAngles;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -226,6 +233,50 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
         @Override
         public void setToLerp(A start, A end, float partial) {
+            value = start;
+        }
+    }
+
+    public static class ItemStackV<E extends Entity> extends KeyframeValue<ItemStack,E> {
+        public ItemStackV(String name, Function<E, ItemStack> entityReader, BiConsumer<E, ItemStack> entitySetter) {
+            super(name, entityReader, entitySetter);
+        }
+        @Override
+        public void readFromData(JsonObject data) {
+            String item = UtilParse.getStringSafe(data, "item", "minecraft:air");
+            int count = UtilParse.getIntSafe(data, "count", 1);
+            int damage = UtilParse.getIntSafe(data, "damage", 0);
+            String nbtStr = UtilParse.getStringSafe(data, "nbt", "{}");
+            CompoundTag nbt = null;
+            try {
+                nbt = TagParser.parseTag(nbtStr);
+            } catch (CommandSyntaxException e) {
+                System.out.println("Could not parse nbt for item: "+nbtStr);
+                e.printStackTrace();
+            }
+            ItemStack stack = new ItemStack(UtilItem.getItem(item, Items.AIR));
+            stack.setCount(count);
+            stack.setDamageValue(damage);
+            if (nbt != null) stack.setTag(nbt);
+            value = stack;
+        }
+        @Override
+        public void writeToData(JsonObject data) {
+            data.addProperty("item", UtilItem.getItemKeyString(value.getItem()));
+            data.addProperty("count", value.getCount());
+            data.addProperty("damage", value.getDamageValue());
+            data.addProperty("nbt", value.getOrCreateTag().toString());
+        }
+        @Override
+        public @NotNull ItemStack get() {
+            return value;
+        }
+        @Override
+        public @NotNull ItemStack getDefault() {
+            return ItemStack.EMPTY;
+        }
+        @Override
+        public void setToLerp(ItemStack start, ItemStack end, float partial) {
             value = start;
         }
     }
