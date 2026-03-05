@@ -13,6 +13,8 @@ public class MoreEntityKeyframes {
         public final KeyframeValue.EnumV<Pose,E> pose = registerEnumValue("pose", Entity::getPose, Entity::setPose, Pose.class);
         // TODO fallFlying
         // TODO main hand and off hand
+        public final KeyframeValue.ItemStackV<E> mainHand = registerItemStackValue("mainHand", LivingEntity::getMainHandItem,
+                (entity, item) -> {});
         protected AbstractLivingEntityKeyframe() {
             super();
         }

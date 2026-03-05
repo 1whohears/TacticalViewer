@@ -3,6 +3,7 @@ package com.onewhohears.tacview.common.core;
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,6 +124,11 @@ public class EntityKeyframe<E extends Entity> {
     protected <A extends Enum<A>> KeyframeValue.EnumV<A,E> registerEnumValue(String name, Function<E, A> entityReader,
                                                                              BiConsumer<E, A> entitySetter, Class<A> enumClass) {
         return registerValue(new KeyframeValue.EnumV<>(name, entityReader, entitySetter, enumClass));
+    }
+
+    protected KeyframeValue.ItemStackV<E> registerItemStackValue(String name, Function<E,ItemStack> entityReader,
+                                                                             BiConsumer<E,ItemStack> entitySetter) {
+        return registerValue(new KeyframeValue.ItemStackV<>(name, entityReader, entitySetter));
     }
 
     public long getTick() {
