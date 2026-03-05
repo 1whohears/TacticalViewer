@@ -34,7 +34,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public void setEntity(E entity) {
         entitySetter.accept(entity, value);
     }
-    public abstract void readFromData(JsonObject data);
+    public abstract void readFromData(JsonObject data); // TODO if value doesn't change don't write the same data again
     public abstract void writeToData(JsonObject data);
     @NotNull public abstract T get();
     @NotNull public abstract T getDefault();
