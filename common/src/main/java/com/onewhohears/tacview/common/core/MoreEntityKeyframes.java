@@ -1,8 +1,8 @@
 package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -12,10 +12,12 @@ public class MoreEntityKeyframes {
     public static abstract class AbstractLivingEntityKeyframe<E extends LivingEntity> extends EntityKeyframe<E> {
         public final KeyframeValue.FloatV<E> health = registerFloatValue("health", LivingEntity::getHealth, LivingEntity::setHealth);
         public final KeyframeValue.EnumV<Pose,E> pose = registerEnumValue("pose", Entity::getPose, Entity::setPose, Pose.class);
-        public final KeyframeValue.ItemStackV<E> mainHand = registerItemStackValue("mainHand", LivingEntity::getMainHandItem,
-                (entity, item) -> entity.setItemInHand(InteractionHand.MAIN_HAND, item));
-        public final KeyframeValue.ItemStackV<E> offHand = registerItemStackValue("offHand", LivingEntity::getOffhandItem,
-                (entity, item) -> entity.setItemInHand(InteractionHand.OFF_HAND, item));
+        public final KeyframeValue.ItemStackV<E> mainHand = registerEquipmentSlotValue("mainHand", EquipmentSlot.MAINHAND);
+        public final KeyframeValue.ItemStackV<E> offHand = registerEquipmentSlotValue("offHand", EquipmentSlot.OFFHAND);
+        public final KeyframeValue.ItemStackV<E> helmet = registerEquipmentSlotValue("helmet", EquipmentSlot.HEAD);
+        public final KeyframeValue.ItemStackV<E> chestplate = registerEquipmentSlotValue("chestplate", EquipmentSlot.CHEST);
+        public final KeyframeValue.ItemStackV<E> leggings = registerEquipmentSlotValue("leggings", EquipmentSlot.LEGS);
+        public final KeyframeValue.ItemStackV<E> boots = registerEquipmentSlotValue("boots", EquipmentSlot.FEET);
         // TODO fallFlying
         protected AbstractLivingEntityKeyframe() {
             super();
@@ -25,6 +27,11 @@ public class MoreEntityKeyframes {
         }
         public AbstractLivingEntityKeyframe(@NotNull JsonObject data) {
             super(data);
+        }
+        protected KeyframeValue.ItemStackV<E> registerEquipmentSlotValue(String name, EquipmentSlot slot) {
+            return registerItemStackValue(name,
+                    entity -> entity.getItemBySlot(slot),
+                    (entity, item) -> entity.setItemSlot(slot, item));
         }
     }
     public static class LivingEntityKeyframe extends AbstractLivingEntityKeyframe<LivingEntity> {
@@ -39,7 +46,6 @@ public class MoreEntityKeyframes {
         }
     }
     public static class PlayerKeyframe extends AbstractLivingEntityKeyframe<Player> {
-        // TODO armor slots
         protected PlayerKeyframe() {
             super();
         }
