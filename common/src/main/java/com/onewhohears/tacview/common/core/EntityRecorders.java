@@ -65,7 +65,7 @@ public class EntityRecorders {
         EntityRecorder recorder;
         if (!RECORDER_FACTORIES.containsKey(id)) recorder = DEFAULT_RECORDER.read(data);
         else recorder = RECORDER_FACTORIES.get(id).getRight().read(data);
-        recorder.readValuesFromData(data);
+        recorder.readValuesFromData(data, null);
         return recorder;
     }
 

@@ -5,6 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.onewhohears.onewholibs.util.UtilItem;
 import com.onewhohears.onewholibs.util.UtilParse;
 import com.onewhohears.onewholibs.util.math.UtilAngles;
+import com.onewhohears.onewholibs.util.math.UtilGeometry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.world.entity.Entity;
@@ -12,7 +13,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -33,11 +36,19 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public void setEntity(E entity) {
         entitySetter.accept(entity, value);
     }
-    public abstract void readFromData(JsonObject data); // TODO if value doesn't change don't write the same data again
+    public void readFromData(JsonObject data, @Nullable T prevValue) {
+        if (!data.has(name) && prevValue != null) {
+            value = prevValue;
+        } else {
+            readFromData(data);
+        }
+    }
+    public abstract void readFromData(JsonObject data);
     public abstract void writeToData(JsonObject data);
     @NotNull public abstract T get();
     @NotNull public abstract T getDefault();
-    public abstract void setToLerp(T start, T end, float partial);
+    public abstract void setToLerp(@NotNull T start, @NotNull T end, float partial);
+    public abstract boolean isEqual(@NotNull T other);
 
     public static class BoolV<E extends Entity> extends KeyframeValue<Boolean,E> {
         public BoolV(String name, Function<E, Boolean> entityReader, BiConsumer<E, Boolean> entitySetter) {
@@ -60,8 +71,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return false;
         }
         @Override
-        public void setToLerp(Boolean start, Boolean end, float partial) {
+        public void setToLerp(@NotNull Boolean start, @NotNull Boolean end, float partial) {
             value = start;
+        }
+        @Override
+        public boolean isEqual(@NotNull Boolean other) {
+            return get() == other;
         }
     }
 
@@ -86,8 +101,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return 0;
         }
         @Override
-        public void setToLerp(Integer start, Integer end, float partial) {
+        public void setToLerp(@NotNull Integer start, @NotNull Integer end, float partial) {
             value = (int) ((end - start) * partial + start);
+        }
+        @Override
+        public boolean isEqual(@NotNull Integer other) {
+            return Objects.equals(get(), other);
         }
     }
 
@@ -112,8 +131,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return 0L;
         }
         @Override
-        public void setToLerp(Long start, Long end, float partial) {
+        public void setToLerp(@NotNull Long start, @NotNull Long end, float partial) {
             value = (long) ((end - start) * partial + start);
+        }
+        @Override
+        public boolean isEqual(@NotNull Long other) {
+            return Objects.equals(get(), other);
         }
     }
 
@@ -138,8 +161,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return 0f;
         }
         @Override
-        public void setToLerp(Float start, Float end, float partial) {
+        public void setToLerp(@NotNull Float start, @NotNull Float end, float partial) {
             value = (end - start) * partial + start;
+        }
+        @Override
+        public boolean isEqual(@NotNull Float other) {
+            return Objects.equals(get(), other);
         }
     }
 
@@ -148,7 +175,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void setToLerp(Float start, Float end, float partial) {
+        public void setToLerp(@NotNull Float start, @NotNull Float end, float partial) {
             value = UtilAngles.lerpAngle(partial, start, end);
         }
     }
@@ -174,8 +201,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return Vec3.ZERO;
         }
         @Override
-        public void setToLerp(Vec3 start, Vec3 end, float partial) {
+        public void setToLerp(@NotNull Vec3 start, @NotNull Vec3 end, float partial) {
             value = start.lerp(end, partial);
+        }
+        @Override
+        public boolean isEqual(@NotNull Vec3 other) {
+            return UtilGeometry.isEqual(get(), other);
         }
     }
 
@@ -201,8 +232,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return DEFAULT_UUID;
         }
         @Override
-        public void setToLerp(UUID start, UUID end, float partial) {
+        public void setToLerp(@NotNull UUID start, @NotNull UUID end, float partial) {
             value = start;
+        }
+        @Override
+        public boolean isEqual(@NotNull UUID other) {
+            return Objects.equals(get(), other);
         }
     }
 
@@ -227,8 +262,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return "";
         }
         @Override
-        public void setToLerp(String start, String end, float partial) {
+        public void setToLerp(@NotNull String start, @NotNull String end, float partial) {
             value = start;
+        }
+        @Override
+        public boolean isEqual(@NotNull String other) {
+            return Objects.equals(get(), other);
         }
     }
 
@@ -257,8 +296,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return defaultValue;
         }
         @Override
-        public void setToLerp(A start, A end, float partial) {
+        public void setToLerp(@NotNull A start, @NotNull A end, float partial) {
             value = start;
+        }
+        @Override
+        public boolean isEqual(@NotNull A other) {
+            return value == other;
         }
     }
 
@@ -268,10 +311,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
         @Override
         public void readFromData(JsonObject data) {
-            String item = UtilParse.getStringSafe(data, "item", "minecraft:air");
-            int count = UtilParse.getIntSafe(data, "count", 1);
-            int damage = UtilParse.getIntSafe(data, "damage", 0);
-            String nbtStr = UtilParse.getStringSafe(data, "nbt", "{}");
+            JsonObject itemData = UtilParse.getJsonSafe(data, name);
+            String item = UtilParse.getStringSafe(itemData, "item", "minecraft:air");
+            int count = UtilParse.getIntSafe(itemData, "count", 1);
+            int damage = UtilParse.getIntSafe(itemData, "damage", 0);
+            String nbtStr = UtilParse.getStringSafe(itemData, "nbt", "{}");
             CompoundTag nbt = null;
             try {
                 nbt = TagParser.parseTag(nbtStr);
@@ -287,10 +331,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
         @Override
         public void writeToData(JsonObject data) {
-            data.addProperty("item", UtilItem.getItemKeyString(value.getItem()));
-            data.addProperty("count", value.getCount());
-            data.addProperty("damage", value.getDamageValue());
-            data.addProperty("nbt", value.getOrCreateTag().toString());
+            JsonObject itemData = new JsonObject();
+            itemData.addProperty("item", UtilItem.getItemKeyString(value.getItem()));
+            itemData.addProperty("count", value.getCount());
+            itemData.addProperty("damage", value.getDamageValue());
+            itemData.addProperty("nbt", value.getOrCreateTag().toString());
+            data.add(name, itemData);
         }
         @Override
         public @NotNull ItemStack get() {
@@ -301,8 +347,12 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return ItemStack.EMPTY;
         }
         @Override
-        public void setToLerp(ItemStack start, ItemStack end, float partial) {
+        public void setToLerp(@NotNull ItemStack start, @NotNull ItemStack end, float partial) {
             value = start;
+        }
+        @Override
+        public boolean isEqual(@NotNull ItemStack other) {
+            return ItemStack.isSameItemSameTags(get(), other);
         }
     }
 

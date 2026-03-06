@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,8 +58,9 @@ public class EntityKeyframe<E extends Entity> {
         values.forEach((name, value) -> value.readFromEntity(entity));
     }
 
-    public void readValuesFromData(@NotNull JsonObject data) {
-        values.forEach((name, value) -> value.readFromData(data));
+    public void readValuesFromData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous) {
+        values.forEach((name, value) -> value.readFromData(data,
+                previous != null ? previous.values.get(name).get() : null));
     }
 
     public static <K extends EntityKeyframe<E>, E extends Entity> void setToLerp(

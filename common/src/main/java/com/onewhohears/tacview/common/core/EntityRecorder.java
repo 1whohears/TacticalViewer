@@ -117,7 +117,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
             JsonObject kfObject = kfArray.get(i).getAsJsonObject();
             K keyframe = readKeyframe(kfObject);
             if (keyframe == null) continue;
-            keyframe.readValuesFromData(kfObject);
+            keyframe.readValuesFromData(kfObject, null);
             keyframes.add(keyframe);
         }
     }
