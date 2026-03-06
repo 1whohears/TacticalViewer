@@ -86,6 +86,11 @@ public class EntityKeyframe<E extends Entity> {
         return value;
     }
 
+    protected KeyframeValue.BoolV<E> registerBooleanValue(String name, Function<E, Boolean> entityReader,
+                                                     BiConsumer<E, Boolean> entitySetter) {
+        return registerValue(new KeyframeValue.BoolV<>(name, entityReader, entitySetter));
+    }
+
     protected KeyframeValue.IntV<E> registerIntValue(String name, Function<E, Integer> entityReader,
                                                      BiConsumer<E, Integer> entitySetter) {
         return registerValue(new KeyframeValue.IntV<>(name, entityReader, entitySetter));

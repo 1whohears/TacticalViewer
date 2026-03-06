@@ -2,7 +2,6 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.onewhohears.onewholibs.util.JsonToNBTUtil;
 import com.onewhohears.onewholibs.util.UtilItem;
 import com.onewhohears.onewholibs.util.UtilParse;
 import com.onewhohears.onewholibs.util.math.UtilAngles;
@@ -39,6 +38,32 @@ public abstract class KeyframeValue<T, E extends Entity> {
     @NotNull public abstract T get();
     @NotNull public abstract T getDefault();
     public abstract void setToLerp(T start, T end, float partial);
+
+    public static class BoolV<E extends Entity> extends KeyframeValue<Boolean,E> {
+        public BoolV(String name, Function<E, Boolean> entityReader, BiConsumer<E, Boolean> entitySetter) {
+            super(name, entityReader, entitySetter);
+        }
+        @Override
+        public void readFromData(JsonObject data) {
+            value = UtilParse.getBooleanSafe(data, name, false);
+        }
+        @Override
+        public void writeToData(JsonObject data) {
+            data.addProperty(name, value);
+        }
+        @Override
+        public @NotNull Boolean get() {
+            return value;
+        }
+        @Override
+        public @NotNull Boolean getDefault() {
+            return false;
+        }
+        @Override
+        public void setToLerp(Boolean start, Boolean end, float partial) {
+            value = start;
+        }
+    }
 
     public static class IntV<E extends Entity> extends KeyframeValue<Integer,E> {
         public IntV(String name, Function<E, Integer> entityReader, BiConsumer<E, Integer> entitySetter) {
