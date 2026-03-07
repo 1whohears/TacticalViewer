@@ -27,6 +27,8 @@ public class SessionManager {
 
     private final Map<String,RecordingSession> SESSIONS = new HashMap<>();
 
+    // TODO some kind of record event system to capture player attacks/shielding/missile launches
+
     public boolean watchReplay(@NotNull TacViewEntity entity, @NotNull String sessionId,
                                @NotNull Consumer<String> debug) {
         if (!SESSIONS.containsKey(sessionId)) {
