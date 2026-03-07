@@ -27,7 +27,7 @@ public class DHUtil {
                 int zPos = (int) (minBound.z + z * lod);
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
-                if (!point.success) continue;
+                if (!point.success || point.payload == null) continue;
                 if (point.payload.topYBlockPos > 200) {
                     heightMap[x][z] = point.payload.bottomYBlockPos;
                 } else {
