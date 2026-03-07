@@ -36,7 +36,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public void setEntity(E entity) {
         entitySetter.accept(entity, value);
     }
-    public void readFromData(JsonObject data, @Nullable T prevValue) {
+    public final void readFromData(JsonObject data, @Nullable T prevValue) {
         if (!data.has(name) && prevValue != null) {
             value = prevValue;
         } else {
@@ -44,6 +44,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
         }
     }
     public abstract void readFromData(JsonObject data);
+    public final void writeToData(JsonObject data, @Nullable T prevValue) {
+        if (prevValue != null && isEqual(prevValue)) return;
+        writeToData(data);
+    }
     public abstract void writeToData(JsonObject data);
     @NotNull public abstract T get();
     @NotNull public abstract T getDefault();

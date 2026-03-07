@@ -103,7 +103,7 @@ public class RecordingSession {
         data.addProperty("recordingComplete", recordingComplete);
         data.addProperty("dimension", dimension.location().toString());
         JsonArray recorderArray = new JsonArray();
-        for (EntityRecorder recorder : RECORDERS.values()) recorderArray.add(recorder.getSaveData());
+        for (EntityRecorder recorder : RECORDERS.values()) recorderArray.add(recorder.getSaveData(null));
         data.add("recorders", recorderArray);
         UtilParse.writeVec3(data, "minBound", minBound);
         UtilParse.writeVec3(data, "maxBound", maxBound);

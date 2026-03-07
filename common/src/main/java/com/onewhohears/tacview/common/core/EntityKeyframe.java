@@ -72,15 +72,16 @@ public class EntityKeyframe<E extends Entity> {
         );
     }
 
-    public final @NotNull JsonObject getSaveData() {
+    public final @NotNull JsonObject getSaveData(@Nullable EntityKeyframe<?> previous) {
         JsonObject data = new JsonObject();
-        addSaveData(data);
+        addSaveData(data, previous);
         return data;
     }
 
-    protected void addSaveData(@NotNull JsonObject data) {
+    protected void addSaveData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous) {
         data.addProperty("tick", tick);
-        values.forEach((name, value) -> value.writeToData(data));
+        values.forEach((name, value) -> value.writeToData(data,
+                previous != null ? previous.values.get(name).get() : null));
     }
 
     protected <K extends KeyframeValue<?,E>> K registerValue(K value) {

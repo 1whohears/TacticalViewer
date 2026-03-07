@@ -113,12 +113,14 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         prevRecordTime = UtilParse.getIntSafe(data, "prevRecordTime", 0);
         this.entityFinder = entityFinder;
         JsonArray kfArray = !data.has("keyframes") ? new JsonArray() : data.get("keyframes").getAsJsonArray();
+        @Nullable K prevKeyframe = null;
         for (int i = 0; i < kfArray.size(); ++i) {
             JsonObject kfObject = kfArray.get(i).getAsJsonObject();
             K keyframe = readKeyframe(kfObject);
             if (keyframe == null) continue;
-            keyframe.readValuesFromData(kfObject, null);
+            keyframe.readValuesFromData(kfObject, prevKeyframe);
             keyframes.add(keyframe);
+            prevKeyframe = keyframe;
         }
     }
 
@@ -130,13 +132,18 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         values.remove("vehicleUUID");
     }
 
-    protected void addSaveData(@NotNull JsonObject data) {
-        super.addSaveData(data);
+    @Override
+    protected void addSaveData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous) {
+        super.addSaveData(data, null);
         data.remove("tick");
         data.addProperty("recordRate", recordRate);
         data.addProperty("prevRecordTime", prevRecordTime);
         JsonArray kfArray = new JsonArray();
-        for (K keyframe : keyframes) kfArray.add(keyframe.getSaveData());
+        @Nullable K previousKeyframe = null;
+        for (K keyframe : keyframes) {
+            kfArray.add(keyframe.getSaveData(previousKeyframe));
+            previousKeyframe = keyframe;
+        }
         data.add("keyframes", kfArray);
     }
 
