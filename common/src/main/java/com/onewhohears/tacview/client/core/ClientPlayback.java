@@ -221,6 +221,11 @@ public class ClientPlayback {
         return e;
     }
 
+    @Nullable
+    public Entity getEntity(UUID uuid) {
+        return fakeEntities.get(uuid);
+    }
+
     private void banEntityType(String entityTypeStr, String reason) {
         bannedEntityTypes.add(entityTypeStr);
         LOGGER.error("Tac View Attempted to render a fake entity and an error was thrown. " +

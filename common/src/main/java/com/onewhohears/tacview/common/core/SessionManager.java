@@ -26,8 +26,7 @@ public class SessionManager {
     public static String SESSION_PATH = "tac_view/recordings/";
 
     private final Map<String,RecordingSession> SESSIONS = new HashMap<>();
-
-    // TODO some kind of record event system to capture player attacks/shielding/missile launches
+    private final RecordEventManager eventManager = new RecordEventManager();
 
     public boolean watchReplay(@NotNull TacViewEntity entity, @NotNull String sessionId,
                                @NotNull Consumer<String> debug) {
@@ -173,6 +172,10 @@ public class SessionManager {
     public void readSessionDataFromServer(@NotNull JsonObject sessionData) {
         RecordingSession session = new RecordingSession(sessionData);
         SESSIONS.put(session.getSessionId(), session);
+    }
+
+    public RecordEventManager getEventManager() {
+        return eventManager;
     }
 
     private static SessionManager INSTANCE = null;
