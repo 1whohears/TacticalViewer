@@ -169,8 +169,8 @@ public class ClientPlayback {
 
             try {
                 EntityKeyframe keyframe = recorder.interpolate(tick, pt);
-                // TODO dont render entities until they have keyframes
-                if (tick <= keyframe.getTick() + recorder.recordRate) {
+
+                if (tick <= keyframe.getTick() + recorder.recordRate && tick >= keyframe.getTick() - recorder.recordRate) {
                     keyframe.writeToFakeEntity(fake);
 
                     float f = fake.getYRot();
