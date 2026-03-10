@@ -4,6 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilParse;
+import com.onewhohears.tacview.common.core.recordevent.RecordEvent;
+import com.onewhohears.tacview.common.core.recordevent.RecordEvents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +24,7 @@ public class RecordingSession {
 
     private final String sessionId;
     private final Map<UUID,EntityRecorder> RECORDERS = new HashMap<>();
+    private final List<RecordEvent> events = new ArrayList<>();
     private final int defaultRecordRate;
     private final int maxLength;
     private final ResourceKey<Level> dimension;
@@ -91,6 +94,13 @@ public class RecordingSession {
         }
         this.minBound = UtilParse.readVec3(data, "minBound");
         this.maxBound = UtilParse.readVec3(data, "maxBound");
+        JsonArray eventArray = !data.has("events") ? new JsonArray() : data.get("events").getAsJsonArray();
+        for (int i = 0; i < eventArray.size(); ++i) {
+            JsonObject eventObject = eventArray.get(i).getAsJsonObject();
+            RecordEvent event = RecordEvents.readEvent(eventObject);
+            if (event == null) continue;
+            events.add(event);
+        }
     }
 
     public JsonObject getSaveData() {
@@ -107,6 +117,9 @@ public class RecordingSession {
         data.add("recorders", recorderArray);
         UtilParse.writeVec3(data, "minBound", minBound);
         UtilParse.writeVec3(data, "maxBound", maxBound);
+        JsonArray eventArray = new JsonArray();
+        for (RecordEvent event : events) eventArray.add(event.getSaveData());
+        data.add("events", eventArray);
         return data;
     }
 
@@ -190,4 +203,21 @@ public class RecordingSession {
         if (pos.z > maxBound.z) maxBound = maxBound.multiply(1, 1, 0).add(0, 0, pos.z);
     }
 
+    @NotNull
+    public List<RecordEvent> getRecordEventsAtTick(long tick) {
+        return events.stream().filter(event -> event.getTime() == tick).toList();
+    }
+
+    public void recordEvent(@NotNull RecordEvent event) {
+        events.add(event);
+    }
+
+    public boolean hasAnyEntity(@NotNull Entity... recordEntities) {
+        for (Entity recordEntity : recordEntities) if (hasEntity(recordEntity)) return true;
+        return false;
+    }
+
+    public boolean hasEntity(@NotNull Entity entity) {
+        return RECORDERS.containsKey(entity.getUUID());
+    }
 }

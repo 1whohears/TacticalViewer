@@ -2,6 +2,7 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
+import com.onewhohears.tacview.common.core.recordevent.RecordEvent;
 import com.onewhohears.tacview.common.entity.TacViewEntity;
 import com.onewhohears.tacview.init.TVModEntities;
 import com.onewhohears.tacview.util.UtilFile;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class SessionManager {
@@ -26,7 +28,6 @@ public class SessionManager {
     public static String SESSION_PATH = "tac_view/recordings/";
 
     private final Map<String,RecordingSession> SESSIONS = new HashMap<>();
-    private final RecordEventManager eventManager = new RecordEventManager();
 
     public boolean watchReplay(@NotNull TacViewEntity entity, @NotNull String sessionId,
                                @NotNull Consumer<String> debug) {
@@ -174,8 +175,26 @@ public class SessionManager {
         SESSIONS.put(session.getSessionId(), session);
     }
 
-    public RecordEventManager getEventManager() {
-        return eventManager;
+    public boolean recordEvent(@NotNull RecordEvent event, @NotNull String sessionId) {
+        if (!SESSIONS.containsKey(sessionId)) return false;
+        RecordingSession session = SESSIONS.get(sessionId);
+        session.recordEvent(event);
+        return true;
+    }
+
+    public boolean recordEvent(@NotNull RecordEvent event, boolean addEntities, @NotNull Entity... recordEntities) {
+        AtomicBoolean success = new AtomicBoolean(false);
+        SESSIONS.forEach((id, session) -> {
+            if (session.isRecordingComplete() || !session.hasAnyEntity(recordEntities)) return;
+            if (addEntities) {
+                for (Entity entity : recordEntities) {
+                    session.addEntityToRecord(entity);
+                }
+            }
+            session.recordEvent(event);
+            success.set(true);
+        });
+        return success.get();
     }
 
     private static SessionManager INSTANCE = null;

@@ -215,7 +215,8 @@ public abstract class KeyframeValue<T, E extends Entity> {
     }
 
     public static class UUIDV<E extends Entity> extends KeyframeValue<UUID,E> {
-        public static final UUID DEFAULT_UUID = UUID.fromString("12345678-0000-0000-0000-000000000000");
+        public static final String DEFAULT_UUID_STR = "12345678-0000-0000-0000-000000000000";
+        public static final UUID DEFAULT_UUID = UUID.fromString(DEFAULT_UUID_STR);
         public UUIDV(String name, Function<E, UUID> entityReader, BiConsumer<E, UUID> entitySetter) {
             super(name, entityReader, entitySetter);
         }

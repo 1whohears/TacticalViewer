@@ -2,6 +2,7 @@ package com.onewhohears.tacview;
 
 import com.onewhohears.tacview.client.event.TVClientEventHandlers;
 import com.onewhohears.tacview.common.core.EntityRecorders;
+import com.onewhohears.tacview.common.core.recordevent.RecordEvents;
 import com.onewhohears.tacview.common.event.TVCommonEventHandlers;
 import com.onewhohears.tacview.init.TVModEntities;
 import dev.architectury.platform.Platform;
@@ -15,6 +16,7 @@ public final class TacViewMod {
     public static void init() {
         TVCommonEventHandlers.init();
         EntityRecorders.registerDefaultRecorders();
+        RecordEvents.registerDefaultEventReaders();
         TVModEntities.register();
         if (Platform.getEnvironment() == Env.CLIENT) {
             TVClientEventHandlers.init();

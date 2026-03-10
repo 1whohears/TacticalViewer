@@ -11,6 +11,7 @@ import com.onewhohears.tacview.common.core.EntityKeyframe;
 import com.onewhohears.tacview.common.core.EntityRecorder;
 import com.onewhohears.tacview.common.core.RecordingSession;
 import com.onewhohears.tacview.common.core.SessionManager;
+import com.onewhohears.tacview.common.core.recordevent.RecordEvent;
 import com.onewhohears.tacview.common.entity.TacViewEntity;
 import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
@@ -60,6 +61,7 @@ public class ClientPlayback {
             TVClientManager.get().requestRecordingSessionFromServer(sessionId);
             return;
         }
+        long tick  = parent.getPlaybackTick();
         session.forEachRecorder((uuid, recorder) -> {
             String entityTypeStr = recorder.entityType.get();
             if (bannedEntityTypes.contains(entityTypeStr)) return;
@@ -69,7 +71,7 @@ public class ClientPlayback {
 
             recorder.onPlaybackTick(fake);
 
-            EntityKeyframe keyframe = recorder.interpolate(parent.getPlaybackTick(), 0);
+            EntityKeyframe keyframe = recorder.interpolate(tick, 0);
             if (!keyframe.vehicleUUID.get().isEmpty()) {
                 UUID vehicleUUID = UUID.fromString(keyframe.vehicleUUID.get());
                 EntityRecorder vehicleRecorder = session.getRecorder(vehicleUUID);
@@ -81,6 +83,8 @@ public class ClientPlayback {
                 fake.stopRiding();
             }
         });
+        List<RecordEvent> eventsAtTick = session.getRecordEventsAtTick(tick);
+        eventsAtTick.forEach(event -> event.onEventPlayback(this));
     }
 
     /**
@@ -165,6 +169,7 @@ public class ClientPlayback {
 
             try {
                 EntityKeyframe keyframe = recorder.interpolate(tick, pt);
+                // TODO dont render entities until they have keyframes
                 if (tick <= keyframe.getTick() + recorder.recordRate) {
                     keyframe.writeToFakeEntity(fake);
 

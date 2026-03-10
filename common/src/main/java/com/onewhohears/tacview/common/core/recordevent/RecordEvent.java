@@ -1,4 +1,4 @@
-package com.onewhohears.tacview.common.core;
+package com.onewhohears.tacview.common.core.recordevent;
 
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilParse;
@@ -8,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class RecordEvent {
     private final String eventId;
     private final long time;
-    public RecordEvent(@NotNull String eventId, long gameTIme) {
+    public RecordEvent(@NotNull String eventId, long gameTime) {
         this.eventId = eventId;
-        this.time = gameTIme;
+        this.time = gameTime;
     }
     public RecordEvent(@NotNull JsonObject data) {
         eventId = UtilParse.getStringSafe(data, "eventId", "");
@@ -18,7 +18,7 @@ public abstract class RecordEvent {
         readSaveData(data);
     }
     @NotNull
-    public final JsonObject getSaveData() {
+    public JsonObject getSaveData() {
         JsonObject data = new JsonObject();
         data.addProperty("eventId", getId());
         data.addProperty("time", getTime());
@@ -27,7 +27,7 @@ public abstract class RecordEvent {
     }
     protected abstract void addSaveData(@NotNull JsonObject data);
     protected abstract void readSaveData(@NotNull JsonObject data);
-    protected abstract void onEventPlayback(@NotNull ClientPlayback playback);
+    public abstract void onEventPlayback(@NotNull ClientPlayback playback);
     @NotNull
     public String getId() {
         return eventId;

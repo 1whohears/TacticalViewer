@@ -1,10 +1,13 @@
 package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +58,14 @@ public class MoreRecorders {
             float yBody = Mth.rotLerp(0.25f, entity.yBodyRot, entity.getYRot());
             entity.yBodyRot = yBody;
             entity.yBodyRotO = yBody;
+        }
+
+        @Override
+        public void onPlaybackRender(@NotNull E entity, PoseStack stack, float yaw, @NotNull Vec3 renderPos,
+                                     float partialTick, MultiBufferSource buffer, int packedLight) {
+            super.onPlaybackRender(entity, stack, yaw, renderPos, partialTick, buffer, packedLight);
+            entity.attackAnim = Math.max(0, entity.attackAnim - partialTick); // TODO fix how attackAnim value is handled
+            entity.oAttackAnim = entity.attackAnim;
         }
     }
     public static class LivingRec extends AbstractLivingRec<EntityKeyframe<LivingEntity>, LivingEntity> {

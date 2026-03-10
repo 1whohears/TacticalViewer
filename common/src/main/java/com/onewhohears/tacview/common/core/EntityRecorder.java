@@ -6,8 +6,6 @@ import com.ibm.icu.impl.Pair;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilParse;
-import com.onewhohears.onewholibs.util.math.QuaternionF;
-import com.onewhohears.onewholibs.util.math.Vec3f;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
