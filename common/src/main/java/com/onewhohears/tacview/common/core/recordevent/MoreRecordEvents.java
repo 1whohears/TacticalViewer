@@ -33,7 +33,7 @@ public class MoreRecordEvents {
         }
         @Override
         protected void onEventPlayback(@NotNull ClientPlayback playback, @NotNull Player entity) {
-            entity.attackAnim = 10;
+            entity.attackAnim = 0.001f;
         }
     }
     public static class LivingDeath extends EntityRecordEvent<LivingEntity> {

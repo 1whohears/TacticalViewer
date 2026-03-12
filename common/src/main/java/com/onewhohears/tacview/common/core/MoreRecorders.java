@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -39,6 +40,7 @@ public class MoreRecorders {
         }
     }
     public static abstract class AbstractLivingRec<K extends EntityKeyframe<E>, E extends LivingEntity> extends EntityRecorder<K, E> {
+        public static final float ATTACK_ANIM_INCREASE_RATE = 0.1f;
         public AbstractLivingRec(@NotNull E entity, int recordRate, @NotNull BiFunction<ServerLevel,UUID,E> entityFinder) {
             super(entity, recordRate, entityFinder);
         }
@@ -58,14 +60,13 @@ public class MoreRecorders {
             float yBody = Mth.rotLerp(0.25f, entity.yBodyRot, entity.getYRot());
             entity.yBodyRot = yBody;
             entity.yBodyRotO = yBody;
-        }
-
-        @Override
-        public void onPlaybackRender(@NotNull E entity, PoseStack stack, float yaw, @NotNull Vec3 renderPos,
-                                     float partialTick, MultiBufferSource buffer, int packedLight) {
-            super.onPlaybackRender(entity, stack, yaw, renderPos, partialTick, buffer, packedLight);
-            entity.attackAnim = Math.max(0, entity.attackAnim - partialTick); // TODO fix how attackAnim value is handled
             entity.oAttackAnim = entity.attackAnim;
+            if (entity.attackAnim >= 1) {
+                entity.attackAnim = 0;
+            } else if (entity.attackAnim > 0) {
+                entity.attackAnim = Math.min(1f, entity.attackAnim + ATTACK_ANIM_INCREASE_RATE);
+                entity.swingingArm = InteractionHand.MAIN_HAND;
+            }
         }
     }
     public static class LivingRec extends AbstractLivingRec<EntityKeyframe<LivingEntity>, LivingEntity> {
