@@ -1,6 +1,7 @@
 package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
+import com.onewhohears.tacview.mixin.EntityAccess;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,7 +19,8 @@ public class MoreEntityKeyframes {
         public final KeyframeValue.ItemStackV<E> chestplate = registerEquipmentSlotValue("chestplate", EquipmentSlot.CHEST);
         public final KeyframeValue.ItemStackV<E> leggings = registerEquipmentSlotValue("leggings", EquipmentSlot.LEGS);
         public final KeyframeValue.ItemStackV<E> boots = registerEquipmentSlotValue("boots", EquipmentSlot.FEET);
-        // TODO fallFlying
+        public final KeyframeValue.BoolV<E> fallFlying = registerBooleanValue("fallFlying", LivingEntity::isFallFlying,
+                (entity, value) -> ((EntityAccess)entity).invokeSetSharedFlag(7, value));
         protected AbstractLivingEntityKeyframe() {
             super();
         }

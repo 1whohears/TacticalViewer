@@ -6,6 +6,8 @@
   "client": [
   ],
   "mixins": [
+    "EntityAccess",
+    "LivingEntityAccess"
   ],
   "injectors": {
     "defaultRequire": 1

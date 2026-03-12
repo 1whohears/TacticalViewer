@@ -2,6 +2,7 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.onewhohears.tacview.mixin.LivingEntityAccess;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -66,6 +67,11 @@ public class MoreRecorders {
             } else if (entity.attackAnim > 0) {
                 entity.attackAnim = Math.min(1f, entity.attackAnim + ATTACK_ANIM_INCREASE_RATE);
                 entity.swingingArm = InteractionHand.MAIN_HAND;
+            }
+            if (entity.isFallFlying()) {
+                ((LivingEntityAccess)entity).setFallFlyTicks(entity.getFallFlyingTicks() + 1);
+            } else {
+                ((LivingEntityAccess)entity).setFallFlyTicks(0);
             }
         }
     }
