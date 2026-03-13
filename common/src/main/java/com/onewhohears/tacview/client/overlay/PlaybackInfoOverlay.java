@@ -23,7 +23,9 @@ public class PlaybackInfoOverlay {
         long startTick = session.getSessionStartTime();
         long tick = playback.getParent().getPlaybackTick();
 
-        gui.drawString(m.font, sessionId, 0, 0, 10);
+        String title = sessionId+" "+(tick-startTick)+"/"+length+" "+(paused?"Paused":"");
+
+        gui.drawString(m.font, title, 0, 0, 10);
     }
 
     public static void setOverlayTarget(@Nullable ClientPlayback pb) {
