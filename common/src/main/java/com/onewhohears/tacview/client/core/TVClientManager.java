@@ -1,12 +1,18 @@
 package com.onewhohears.tacview.client.core;
 
 import com.google.gson.JsonObject;
+import com.onewhohears.tacview.client.overlay.PlaybackInfoOverlay;
+import com.onewhohears.tacview.common.command.TacViewCommands;
 import com.onewhohears.tacview.common.core.SessionManager;
 import com.onewhohears.tacview.common.core.SessionState;
+import com.onewhohears.tacview.common.entity.TacViewEntity;
 import com.onewhohears.tacview.common.network.toserver.ToServerRequestSession;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TVClientManager {
@@ -16,7 +22,23 @@ public class TVClientManager {
 
     public void tick() {
         // TODO use hotkeys to manipulate the replay
-        // TODO view entity data when mouse points at them
+        handleOverlay();
+    }
+
+    protected void handleOverlay() {
+        Minecraft m = Minecraft.getInstance();
+        if (m.player == null || m.level == null || m.level.getGameTime() % 10 != 0) {
+            PlaybackInfoOverlay.setOverlayTarget(null);
+            return;
+        }
+        AABB aabb = AABB.ofSize(m.player.position(), 1, 1, 1).inflate(16);
+        List<TacViewEntity> list = m.level.getEntitiesOfClass(TacViewEntity.class, aabb);
+        TacViewEntity entity = TacViewCommands.findClosestEntity(m.player.position(), list);
+        if (entity == null) {
+            PlaybackInfoOverlay.setOverlayTarget(null);
+            return;
+        }
+        PlaybackInfoOverlay.setOverlayTarget(entity.playback);
     }
 
     /**

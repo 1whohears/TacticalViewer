@@ -243,7 +243,8 @@ public class TacViewCommands {
         return entity;
     }
 
-    private static TacViewEntity findClosestEntity(Vec3 pos, List<TacViewEntity> entities) {
+    @Nullable
+    public static TacViewEntity findClosestEntity(Vec3 pos, List<TacViewEntity> entities) {
         TacViewEntity closestEntity = null;
         double minDistance = Double.MAX_VALUE;
         for (TacViewEntity entity : entities) {

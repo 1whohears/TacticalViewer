@@ -339,5 +339,9 @@ public class ClientPlayback {
                 .uv2(packedLight)
                 .normal(normalMatrix, 0, 1, 0)
                 .endVertex();
-        }
     }
+
+    public TacViewEntity getParent() {
+        return parent;
+    }
+}
