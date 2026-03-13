@@ -1,10 +1,13 @@
 package com.onewhohears.tacview.client.overlay;
 
+import com.onewhohears.onewholibs.util.UtilMCText;
 import com.onewhohears.tacview.client.core.ClientPlayback;
 import com.onewhohears.tacview.common.core.RecordingSession;
 import com.onewhohears.tacview.common.core.SessionManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Nullable;
 
 public class PlaybackInfoOverlay {
@@ -23,8 +26,11 @@ public class PlaybackInfoOverlay {
         long startTick = session.getSessionStartTime();
         long tick = playback.getParent().getPlaybackTick();
 
-        String title = sessionId+" "+(tick-startTick)+"/"+length+" "+(paused?"Paused":"");
+        String currentSeconds = String.format("%.2f", (tick-startTick)/20d);
+        String lengthSeconds = String.format("%.2f", length/20d);
+        String titleStr = sessionId+" "+currentSeconds+"/"+lengthSeconds+" "+(paused?"Paused":"");
 
+        Component title = UtilMCText.literal(titleStr).withStyle(Style.EMPTY.withColor(0x00ff00));
         gui.drawString(m.font, title, 0, 0, 10);
     }
 

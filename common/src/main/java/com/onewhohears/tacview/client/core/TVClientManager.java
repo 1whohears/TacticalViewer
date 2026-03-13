@@ -27,10 +27,11 @@ public class TVClientManager {
 
     protected void handleOverlay() {
         Minecraft m = Minecraft.getInstance();
-        if (m.player == null || m.level == null || m.level.getGameTime() % 10 != 0) {
+        if (m.player == null || m.level == null) {
             PlaybackInfoOverlay.setOverlayTarget(null);
             return;
         }
+        if (m.level.getGameTime() % 10 != 0) return;
         AABB aabb = AABB.ofSize(m.player.position(), 1, 1, 1).inflate(16);
         List<TacViewEntity> list = m.level.getEntitiesOfClass(TacViewEntity.class, aabb);
         TacViewEntity entity = TacViewCommands.findClosestEntity(m.player.position(), list);
