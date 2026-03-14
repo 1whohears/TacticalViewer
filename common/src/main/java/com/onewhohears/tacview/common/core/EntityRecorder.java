@@ -5,8 +5,11 @@ import com.google.gson.JsonObject;
 import com.ibm.icu.impl.Pair;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.onewholibs.util.UtilMCText;
 import com.onewhohears.onewholibs.util.UtilParse;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -192,4 +195,9 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
 
     }
 
+    public void addOverlayInfo(@NotNull List<Component> overlayEntityInfo, @NotNull E entity) {
+        overlayEntityInfo.add(UtilMCText.literal(name.get()).setStyle(Style.EMPTY.withColor(0x0000ff)));
+        overlayEntityInfo.add(UtilMCText.literal(entityType.get()).setStyle(Style.EMPTY.withColor(0x0000ff)));
+        // TODO add more overlay info for this entity
+    }
 }

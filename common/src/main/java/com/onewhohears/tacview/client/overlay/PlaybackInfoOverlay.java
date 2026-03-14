@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class PlaybackInfoOverlay {
 
     @Nullable private static ClientPlayback playback;
@@ -32,6 +34,11 @@ public class PlaybackInfoOverlay {
 
         Component title = UtilMCText.literal(titleStr).withStyle(Style.EMPTY.withColor(0x00ff00));
         gui.drawString(m.font, title, 0, 0, 10);
+
+        List<Component> entityInfos = playback.getOverlayEntityInfo();
+        for (int i = 0; i < entityInfos.size(); ++i) {
+            gui.drawString(m.font, entityInfos.get(i), 0, 10*i+10, 10);
+        }
     }
 
     public static void setOverlayTarget(@Nullable ClientPlayback pb) {

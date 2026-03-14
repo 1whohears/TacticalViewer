@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.onewholibs.util.math.UtilGeometry;
 import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.TacViewMod;
 import com.onewhohears.tacview.common.core.EntityKeyframe;
@@ -20,6 +21,8 @@ import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
@@ -42,6 +45,8 @@ public class ClientPlayback {
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
 
+    private final Set<UUID> overlayEntities = new HashSet<>();
+    private final List<Component> overlayEntityInfo = new ArrayList<>();
     private final Set<String> bannedEntityTypes = new HashSet<>();
 
     private int[][] heightMap = null;
@@ -62,6 +67,16 @@ public class ClientPlayback {
             return;
         }
         long tick  = parent.getPlaybackTick();
+        float width = parent.getWidth();
+        float height = parent.getHeight();
+        Vec3 minBound = session.getMinBound();
+        Vec3 maxBound = session.getMaxBound();
+        Vec3 size = maxBound.subtract(minBound);
+        float scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
+        Vec3 center = minBound.add(size.multiply(0.5, 0, 0.5));
+        overlayEntities.clear();
+
+        Minecraft m = Minecraft.getInstance();
         session.forEachRecorder((uuid, recorder) -> {
             String entityTypeStr = recorder.entityType.get();
             if (bannedEntityTypes.contains(entityTypeStr)) return;
@@ -82,6 +97,14 @@ public class ClientPlayback {
             } else if (fake.isPassenger()) {
                 fake.stopRiding();
             }
+
+            Vec3 eye = m.player.getEyePosition();
+            Vec3 d = fake.position().subtract(center);
+            Vec3 worldPos = parent.position().add(d.add(0,fake.getBbHeight()*0.5,0).scale(scale));
+            boolean inCone = UtilGeometry.isPointInsideCone(worldPos, eye, m.player.getLookAngle(),
+                    Math.abs(Math.atan2(fake.getBbWidth()*scale, worldPos.distanceTo(eye)))
+                            *Mth.RAD_TO_DEG*4, width);
+            if (inCone) overlayEntities.add(uuid);
         });
         List<RecordEvent> eventsAtTick = session.getRecordEventsAtTick(tick);
         eventsAtTick.forEach(event -> event.onEventPlayback(this));
@@ -343,5 +366,20 @@ public class ClientPlayback {
 
     public TacViewEntity getParent() {
         return parent;
+    }
+
+    public List<Component> getOverlayEntityInfo() {
+        overlayEntityInfo.clear();
+        String sessionId = parent.getSessionId();
+        RecordingSession session = SessionManager.get().getSession(sessionId);
+        if (session == null) return overlayEntityInfo;
+        for (UUID uuid : overlayEntities) {
+            EntityRecorder recorder = session.getRecorder(uuid);
+            if (recorder == null) continue;
+            Entity fake = getEntity(uuid);
+            if (fake == null) continue;
+            recorder.addOverlayInfo(overlayEntityInfo, fake);
+        }
+        return overlayEntityInfo;
     }
 }
