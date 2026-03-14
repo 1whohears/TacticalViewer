@@ -103,7 +103,7 @@ public class ClientPlayback {
             boolean inCone = UtilGeometry.isPointInsideCone(worldPos, eye, m.player.getLookAngle(),
                     Math.abs(Math.atan2(fake.getBbWidth()*scale, worldPos.distanceTo(eye)))
                             *Mth.RAD_TO_DEG*4, width);
-            if (inCone) recorder.addOverlayInfo(overlayEntityInfo, fake);
+            if (inCone) recorder.addOverlayInfo(overlayEntityInfo, fake, keyframe);
         });
         List<RecordEvent> eventsAtTick = session.getRecordEventsAtTick(tick);
         eventsAtTick.forEach(event -> event.onEventPlayback(this));

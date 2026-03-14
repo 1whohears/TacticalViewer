@@ -14,6 +14,8 @@ import java.util.List;
 
 public class PlaybackInfoOverlay {
 
+    public static final Style GREEN = Style.EMPTY.withColor(0x00ff00);
+
     @Nullable private static ClientPlayback playback;
 
     public static void render(GuiGraphics gui, float partialTick) {
@@ -32,7 +34,7 @@ public class PlaybackInfoOverlay {
         String lengthSeconds = String.format("%.2f", length/20d);
         String titleStr = sessionId+" "+currentSeconds+"/"+lengthSeconds+" "+(paused?"Paused":"");
 
-        Component title = UtilMCText.literal(titleStr).withStyle(Style.EMPTY.withColor(0x00ff00));
+        Component title = UtilMCText.literal(titleStr).withStyle(GREEN);
         gui.drawString(m.font, title, 0, 0, 10);
 
         List<Component> entityInfos = playback.getOverlayEntityInfo();

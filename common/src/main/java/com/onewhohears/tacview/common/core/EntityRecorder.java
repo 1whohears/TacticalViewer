@@ -195,9 +195,12 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
 
     }
 
-    public void addOverlayInfo(@NotNull List<Component> overlayEntityInfo, @NotNull E entity) {
-        overlayEntityInfo.add(UtilMCText.literal(name.get()).setStyle(Style.EMPTY.withColor(0x0000ff)));
-        overlayEntityInfo.add(UtilMCText.literal(entityType.get()).setStyle(Style.EMPTY.withColor(0x0000ff)));
+    public static final Style NAME = Style.EMPTY.withColor(0xff00ff).withUnderlined(true);
+    public static final Style INFO = Style.EMPTY.withColor(0x0000ff);
+
+    public void addOverlayInfo(@NotNull List<Component> overlayEntityInfo, @NotNull E entity, @NotNull K keyframe) {
+        overlayEntityInfo.add(UtilMCText.literal(name.get()).setStyle(NAME));
+        overlayEntityInfo.add(UtilMCText.literal(entityType.get()).setStyle(INFO));
         // TODO add more overlay info for this entity
     }
 }
