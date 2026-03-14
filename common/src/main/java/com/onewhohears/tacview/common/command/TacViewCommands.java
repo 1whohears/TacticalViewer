@@ -65,6 +65,9 @@ public class TacViewCommands {
                                 ))
                         )
                 )
+                .then(Commands.literal("stop_all")
+                        .executes(ctx -> stopAllRecordings(ctx.getSource()))
+                )
                 .then(Commands.literal("info")
                         .executes(ctx -> listInfoAll(ctx.getSource()))
                         .then(Commands.argument("session_id", StringArgumentType.word())
@@ -278,6 +281,14 @@ public class TacViewCommands {
     private int stopRecording(@NotNull CommandSourceStack source, @NotNull String sessionId) {
         AtomicReference<String> msg = new AtomicReference<>();
         boolean result = SessionManager.get().stopRecording(sessionId, source.getLevel(), msg::set);
+        if (result) source.sendSuccess(() -> UtilMCText.literal(msg.get()), true);
+        else source.sendFailure(UtilMCText.literal(msg.get()));
+        return result ? 1 : 0;
+    }
+
+    private int stopAllRecordings(@NotNull CommandSourceStack source) {
+        AtomicReference<String> msg = new AtomicReference<>();
+        boolean result = SessionManager.get().stopAllRecordings(source.getLevel(), msg::set);
         if (result) source.sendSuccess(() -> UtilMCText.literal(msg.get()), true);
         else source.sendFailure(UtilMCText.literal(msg.get()));
         return result ? 1 : 0;

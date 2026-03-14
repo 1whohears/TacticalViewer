@@ -170,6 +170,17 @@ public class SessionManager {
         return session.finishRecording(level, debug);
     }
 
+    public boolean stopAllRecordings(@NotNull ServerLevel level, @NotNull Consumer<String> debug) {
+        StringBuilder builder = new StringBuilder();
+        SESSIONS.forEach((id, session) -> {
+            if (!session.isRecordingComplete()) {
+                session.finishRecording(level, msg -> builder.append(msg).append(" | "));
+            }
+        });
+        debug.accept(builder.toString());
+        return true;
+    }
+
     public void readSessionDataFromServer(@NotNull JsonObject sessionData) {
         RecordingSession session = new RecordingSession(sessionData);
         SESSIONS.put(session.getSessionId(), session);
