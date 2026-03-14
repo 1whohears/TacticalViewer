@@ -45,7 +45,6 @@ public class ClientPlayback {
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
 
-    private final Set<UUID> overlayEntities = new HashSet<>();
     private final List<Component> overlayEntityInfo = new ArrayList<>();
     private final Set<String> bannedEntityTypes = new HashSet<>();
 
@@ -74,8 +73,8 @@ public class ClientPlayback {
         Vec3 size = maxBound.subtract(minBound);
         float scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
         Vec3 center = minBound.add(size.multiply(0.5, 0, 0.5));
-        overlayEntities.clear();
 
+        overlayEntityInfo.clear();
         Minecraft m = Minecraft.getInstance();
         session.forEachRecorder((uuid, recorder) -> {
             String entityTypeStr = recorder.entityType.get();
@@ -104,7 +103,7 @@ public class ClientPlayback {
             boolean inCone = UtilGeometry.isPointInsideCone(worldPos, eye, m.player.getLookAngle(),
                     Math.abs(Math.atan2(fake.getBbWidth()*scale, worldPos.distanceTo(eye)))
                             *Mth.RAD_TO_DEG*4, width);
-            if (inCone) overlayEntities.add(uuid);
+            if (inCone) recorder.addOverlayInfo(overlayEntityInfo, fake);
         });
         List<RecordEvent> eventsAtTick = session.getRecordEventsAtTick(tick);
         eventsAtTick.forEach(event -> event.onEventPlayback(this));
@@ -369,17 +368,6 @@ public class ClientPlayback {
     }
 
     public List<Component> getOverlayEntityInfo() {
-        overlayEntityInfo.clear();
-        String sessionId = parent.getSessionId();
-        RecordingSession session = SessionManager.get().getSession(sessionId);
-        if (session == null) return overlayEntityInfo;
-        for (UUID uuid : overlayEntities) {
-            EntityRecorder recorder = session.getRecorder(uuid);
-            if (recorder == null) continue;
-            Entity fake = getEntity(uuid);
-            if (fake == null) continue;
-            recorder.addOverlayInfo(overlayEntityInfo, fake);
-        }
         return overlayEntityInfo;
     }
 }
