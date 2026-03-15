@@ -73,6 +73,10 @@ dependencies {
 
     modRuntimeOnly "maven.modrinth:DistantHorizons:$rootProject.distanthorizons_version"
 
+    implementation 'com.electronwill.night-config:core:3.6.5'
+    implementation 'com.electronwill.night-config:toml:3.6.5'
+    modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${rootProject.forgeconfigapiport_version}"
+
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 }

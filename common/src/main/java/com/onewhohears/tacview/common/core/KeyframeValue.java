@@ -3,11 +3,14 @@ package com.onewhohears.tacview.common.core;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.onewhohears.onewholibs.util.UtilItem;
+import com.onewhohears.onewholibs.util.UtilMCText;
 import com.onewhohears.onewholibs.util.UtilParse;
 import com.onewhohears.onewholibs.util.math.UtilAngles;
 import com.onewhohears.onewholibs.util.math.UtilGeometry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -15,10 +18,13 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import static com.onewhohears.tacview.common.core.EntityRecorder.ID;
 
 public abstract class KeyframeValue<T, E extends Entity> {
     public final String name;
@@ -53,6 +59,13 @@ public abstract class KeyframeValue<T, E extends Entity> {
     @NotNull public abstract T getDefault();
     public abstract void setToLerp(@NotNull T start, @NotNull T end, float partial);
     public abstract boolean isEqual(@NotNull T other);
+    public void addOverlayInfo(@NotNull List<Component> overlayEntityInfo) {
+        MutableComponent n = UtilMCText.literal(name+": ").setStyle(ID);
+        overlayEntityInfo.add(n.append(UtilMCText.literal(getValueToString()).setStyle(EntityRecorder.VALUE)));
+    }
+    public String getValueToString() {
+        return get()+"";
+    }
 
     public static class BoolV<E extends Entity> extends KeyframeValue<Boolean,E> {
         public BoolV(String name, Function<E, Boolean> entityReader, BiConsumer<E, Boolean> entitySetter) {
@@ -211,6 +224,10 @@ public abstract class KeyframeValue<T, E extends Entity> {
         @Override
         public boolean isEqual(@NotNull Vec3 other) {
             return UtilGeometry.isEqual(get(), other);
+        }
+        @Override
+        public String getValueToString() {
+            return String.format("[%.1f,%.1f,%.1f]",get().x,get().y,get().z);
         }
     }
 

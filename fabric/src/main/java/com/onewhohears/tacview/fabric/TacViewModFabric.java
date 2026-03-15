@@ -1,16 +1,17 @@
 package com.onewhohears.tacview.fabric;
 
+import com.onewhohears.tacview.Config;
 import com.onewhohears.tacview.TacViewMod;
+import fuzs.forgeconfigapiport.api.config.v2.ForgeConfigRegistry;
 import net.fabricmc.api.ModInitializer;
+import net.minecraftforge.fml.config.ModConfig;
+
+import static com.onewhohears.tacview.TacViewMod.MOD_ID;
 
 public final class TacViewModFabric implements ModInitializer {
     @Override
     public void onInitialize() {
-        // This code runs as soon as Minecraft is in a mod-load-ready state.
-        // However, some things (like resources) may still be uninitialized.
-        // Proceed with mild caution.
-
-        // Run our common setup.
         TacViewMod.init();
+        ForgeConfigRegistry.INSTANCE.register(MOD_ID, ModConfig.Type.CLIENT, Config.clientSpec);
     }
 }

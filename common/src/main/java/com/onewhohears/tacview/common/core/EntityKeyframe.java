@@ -2,6 +2,8 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.tacview.Config;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -9,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -70,6 +73,14 @@ public class EntityKeyframe<E extends Entity> {
         lerpKeyframe.values.forEach((name, value) ->
                 value.setToLerp(start.values.get(name).get(), end.values.get(name).get(), partial)
         );
+    }
+
+    public void addOverlayInfo(@NotNull List<Component> overlayEntityInfo) {
+        values.forEach((name, value) -> {
+            if (Config.CLIENT.showValues.get().contains(name)) {
+                value.addOverlayInfo(overlayEntityInfo);
+            }
+        });
     }
 
     public final @NotNull JsonObject getSaveData(@Nullable EntityKeyframe<?> previous) {

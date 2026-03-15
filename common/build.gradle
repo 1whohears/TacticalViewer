@@ -21,4 +21,6 @@ dependencies {
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.0"))
 
     modCompileOnly "maven.modrinth:DistantHorizonsApi:${rootProject.distanthorizons_api_version}"
+
+    api "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${rootProject.forgeconfigapiport_version}"
 }

@@ -33,6 +33,10 @@ subprojects {
                 includeGroup "maven.modrinth"
             }
         }
+        maven {
+            name = "Fuzs Mod Resources"
+            url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+        }
     }
 
     dependencies {
