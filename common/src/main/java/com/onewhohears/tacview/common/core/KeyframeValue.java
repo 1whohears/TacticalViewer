@@ -67,8 +67,8 @@ public abstract class KeyframeValue<T, E extends Entity> {
     }
     public static void addOverlayValue(@NotNull List<Component> overlayEntityInfo,
                                        @NotNull String name, @NotNull String value) {
-        MutableComponent n = UtilMCText.literal(name+": ").setStyle(ID);
-        overlayEntityInfo.add(n.append(UtilMCText.literal(value).setStyle(EntityRecorder.VALUE)));
+        overlayEntityInfo.add(UtilMCText.literal(name+": ").setStyle(ID).append(
+                UtilMCText.literal(value).setStyle(EntityRecorder.VALUE)));
     }
 
     public static class BoolV<E extends Entity> extends KeyframeValue<Boolean,E> {
