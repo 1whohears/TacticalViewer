@@ -7,11 +7,10 @@ import java.util.List;
 
 public class Config {
     public static class Client {
-        public final ForgeConfigSpec.ConfigValue<List<? extends String>> showValues;
+        public final ForgeConfigSpec.ConfigValue<List<? extends String>> hideValues;
         public Client(ForgeConfigSpec.Builder builder) {
-            showValues = builder.defineList("showValues",
-                    List.of("health"),
-                    entry -> true);
+            hideValues = builder.defineList("hideValues",
+                    List.of(), entry -> true);
         }
     }
 

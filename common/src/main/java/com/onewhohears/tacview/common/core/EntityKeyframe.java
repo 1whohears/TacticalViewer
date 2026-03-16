@@ -10,10 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -21,6 +18,12 @@ import java.util.function.Function;
  * All the saved data at a tick that will be replayed later. These are values that could change over time.
  */
 public class EntityKeyframe<E extends Entity> {
+
+    public static final Set<String> VISIBLE_VALUES = new HashSet<>();
+
+    public static void addDefaultVisibleValues() {
+        VISIBLE_VALUES.add("health");
+    }
 
     public final Map<String, KeyframeValue<Object,E>> values = new HashMap<>();
 
@@ -77,7 +80,7 @@ public class EntityKeyframe<E extends Entity> {
 
     public void addOverlayInfo(@NotNull List<Component> overlayEntityInfo) {
         values.forEach((name, value) -> {
-            if (Config.CLIENT.showValues.get().contains(name)) {
+            if (VISIBLE_VALUES.contains(name) && !Config.CLIENT.hideValues.get().contains(name)) {
                 value.addOverlayInfo(overlayEntityInfo);
             }
         });
