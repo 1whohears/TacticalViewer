@@ -3,6 +3,7 @@ package com.onewhohears.tacview.common.entity;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.tacview.client.core.ClientPlayback;
 import com.onewhohears.tacview.client.core.TVClientManager;
+import com.onewhohears.tacview.client.core.ViewerInputs;
 import com.onewhohears.tacview.common.core.RecordingSession;
 import com.onewhohears.tacview.common.core.SessionManager;
 import net.minecraft.nbt.CompoundTag;
@@ -163,5 +164,25 @@ public class TacViewEntity extends Entity {
     public void resetReplay() {
         setPlaybackTick(0);
         setPaused(false);
+    }
+
+    public void handleInput(ViewerInputs input) {
+        switch (input) {
+            case PAUSE -> {
+                setPaused(!isPaused());
+            }
+            case FORWARD_TEN -> {
+                tickStep(200);
+            }
+            case BACKWARD_TEN -> {
+                tickStep(-200);
+            }
+            case FORWARD_TICK -> {
+                tickStep(1);
+            }
+            case BACKWARD_TICK -> {
+                tickStep(-1);
+            }
+        }
     }
 }

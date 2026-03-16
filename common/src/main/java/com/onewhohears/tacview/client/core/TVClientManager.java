@@ -1,15 +1,18 @@
 package com.onewhohears.tacview.client.core;
 
 import com.google.gson.JsonObject;
+import com.onewhohears.tacview.client.input.TVKeyBinds;
 import com.onewhohears.tacview.client.overlay.PlaybackInfoOverlay;
 import com.onewhohears.tacview.common.command.TacViewCommands;
 import com.onewhohears.tacview.common.core.SessionManager;
 import com.onewhohears.tacview.common.core.SessionState;
 import com.onewhohears.tacview.common.entity.TacViewEntity;
 import com.onewhohears.tacview.common.network.toserver.ToServerRequestSession;
+import com.onewhohears.tacview.common.network.toserver.ToServerUpdateViewer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,12 +23,51 @@ public class TVClientManager {
     public static final long REQUEST_RETRY_TIME = 4000;
     private final Map<String, RequestedSessionData> requestedSessions = new HashMap<>();
 
+    @Nullable
+    private TacViewEntity nearestViewer = null;
+
     public void tick() {
-        // TODO use hotkeys to manipulate the replay
+        findNearestViewer();
+        handleInputs();
         handleOverlay();
     }
 
+    protected void handleInputs() {
+        if (nearestViewer == null) return;
+        if (TVKeyBinds.PAUSE.consumeClick()) {
+            sendViewerUpdateInput(ViewerInputs.PAUSE);
+        }
+        if (TVKeyBinds.FORWARD_TEN.consumeClick()) {
+            sendViewerUpdateInput(ViewerInputs.FORWARD_TEN);
+        }
+        if (TVKeyBinds.BACKWARD_TEN.consumeClick()) {
+            sendViewerUpdateInput(ViewerInputs.BACKWARD_TEN);
+        }
+        if (TVKeyBinds.FORWARD_TICK.consumeClick()) {
+            sendViewerUpdateInput(ViewerInputs.FORWARD_TICK);
+        }
+        if (TVKeyBinds.BACKWARD_TICK.consumeClick()) {
+            sendViewerUpdateInput(ViewerInputs.BACKWARD_TICK);
+        }
+    }
+
+    /**
+     * CLIENT SIDE ONLY
+     */
+    public void sendViewerUpdateInput(ViewerInputs input) {
+        if (nearestViewer == null) return;
+        new ToServerUpdateViewer(nearestViewer, input).sendToServer();
+    }
+
     protected void handleOverlay() {
+        if (nearestViewer == null) {
+            PlaybackInfoOverlay.setOverlayTarget(null);
+            return;
+        }
+        PlaybackInfoOverlay.setOverlayTarget(nearestViewer.playback);
+    }
+
+    protected void findNearestViewer() {
         Minecraft m = Minecraft.getInstance();
         if (m.player == null || m.level == null) {
             PlaybackInfoOverlay.setOverlayTarget(null);
@@ -34,12 +76,7 @@ public class TVClientManager {
         if (m.level.getGameTime() % 10 != 0) return;
         AABB aabb = AABB.ofSize(m.player.position(), 1, 1, 1).inflate(16);
         List<TacViewEntity> list = m.level.getEntitiesOfClass(TacViewEntity.class, aabb);
-        TacViewEntity entity = TacViewCommands.findClosestEntity(m.player.position(), list);
-        if (entity == null) {
-            PlaybackInfoOverlay.setOverlayTarget(null);
-            return;
-        }
-        PlaybackInfoOverlay.setOverlayTarget(entity.playback);
+        nearestViewer = TacViewCommands.findClosestEntity(m.player.position(), list);
     }
 
     /**

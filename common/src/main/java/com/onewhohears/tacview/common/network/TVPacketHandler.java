@@ -4,6 +4,7 @@ import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.tacview.TacViewMod;
 import com.onewhohears.tacview.common.network.toclient.ToClientSendSession;
 import com.onewhohears.tacview.common.network.toserver.ToServerRequestSession;
+import com.onewhohears.tacview.common.network.toserver.ToServerUpdateViewer;
 import dev.architectury.networking.simple.BaseS2CMessage;
 import dev.architectury.networking.simple.MessageType;
 import dev.architectury.networking.simple.SimpleNetworkManager;
@@ -20,6 +21,8 @@ public final class TVPacketHandler {
 
     public static final MessageType C2S_REQUEST_SESSION = INSTANCE.registerC2S(
             "c2s_request_session", ToServerRequestSession::new);
+    public static final MessageType C2S_UPDATE_VIEWER = INSTANCE.registerC2S(
+            "c2s_update_viewer", ToServerUpdateViewer::new);
 
     public static final MessageType S2C_SEND_SESSION = INSTANCE.registerS2C(
             "s2c_send_session", ToClientSendSession::new);

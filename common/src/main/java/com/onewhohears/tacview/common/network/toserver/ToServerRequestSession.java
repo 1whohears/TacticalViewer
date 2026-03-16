@@ -44,5 +44,4 @@ public class ToServerRequestSession extends BaseC2SMessage {
         return TVPacketHandler.C2S_REQUEST_SESSION;
     }
 
-
 }
