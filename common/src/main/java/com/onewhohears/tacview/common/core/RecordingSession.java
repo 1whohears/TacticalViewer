@@ -24,6 +24,7 @@ public class RecordingSession {
 
     private final String sessionId;
     private final Map<UUID,EntityRecorder> RECORDERS = new HashMap<>();
+    private final Set<Entity> addNextTick = new HashSet<>();
     private final List<RecordEvent> events = new ArrayList<>();
     private final int defaultRecordRate;
     private final int maxLength;
@@ -35,11 +36,15 @@ public class RecordingSession {
 
     public void addEntityToRecord(@NotNull Entity entity) {
         if (RECORDERS.containsKey(entity.getUUID())) return;
-        RECORDERS.put(entity.getUUID(), EntityRecorders.createEntityRecorder(entity, getEntityRecordRate(entity)));
+        addNextTick.add(entity); // cant add to RECORDERS directly due to risk of ConcurrentModificationException
     }
 
     public void tickRecord(@NotNull ServerLevel level) {
         if (recordingComplete) return;
+        for (Entity e : addNextTick) {
+            RECORDERS.put(e.getUUID(), EntityRecorders.createEntityRecorder(e, getEntityRecordRate(e)));
+        }
+        addNextTick.clear();
         forEachRecorder((uuid, recorder) -> {
             recorder.tickRecord(this, level);
             if (sessionStartTime == -1) recorder.onRecordingStart(this);
@@ -51,11 +56,7 @@ public class RecordingSession {
     }
 
     public void forEachRecorder(BiConsumer<UUID,EntityRecorder> consumer) {
-        Iterator<Map.Entry<UUID,EntityRecorder>> it = RECORDERS.entrySet().iterator();
-        while (it.hasNext()) { // do not use for loop or forEach because of risk of concurrent modification exception
-            Map.Entry<UUID,EntityRecorder> entry = it.next();
-            consumer.accept(entry.getKey(), entry.getValue());
-        }
+        RECORDERS.forEach(consumer);
     }
 
     @Nullable
