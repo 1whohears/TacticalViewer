@@ -60,11 +60,15 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public abstract void setToLerp(@NotNull T start, @NotNull T end, float partial);
     public abstract boolean isEqual(@NotNull T other);
     public void addOverlayInfo(@NotNull List<Component> overlayEntityInfo) {
-        MutableComponent n = UtilMCText.literal(name+": ").setStyle(ID);
-        overlayEntityInfo.add(n.append(UtilMCText.literal(getValueToString()).setStyle(EntityRecorder.VALUE)));
+        addOverlayValue(overlayEntityInfo, name, getValueToString());
     }
     public String getValueToString() {
         return get()+"";
+    }
+    public static void addOverlayValue(@NotNull List<Component> overlayEntityInfo,
+                                       @NotNull String name, @NotNull String value) {
+        MutableComponent n = UtilMCText.literal(name+": ").setStyle(ID);
+        overlayEntityInfo.add(n.append(UtilMCText.literal(value).setStyle(EntityRecorder.VALUE)));
     }
 
     public static class BoolV<E extends Entity> extends KeyframeValue<Boolean,E> {
