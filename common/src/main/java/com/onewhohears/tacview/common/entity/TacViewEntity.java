@@ -70,6 +70,12 @@ public class TacViewEntity extends Entity {
         setPlaybackTick(getPlaybackTick() + steps);
     }
 
+    public void setPlaybackSecond(float second) {
+        RecordingSession session = SessionManager.get().getSession(getSessionId());
+        if (session == null) return;
+        setPlaybackTick((long) (second * 20) + session.getSessionStartTime());
+    }
+
     public TacViewEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
         if (UtilEntity.getLevel(this).isClientSide()) playback = new ClientPlayback(this);

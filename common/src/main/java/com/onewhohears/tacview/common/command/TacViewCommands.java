@@ -150,6 +150,20 @@ public class TacViewCommands {
                                 )
                         )
                 )
+                .then(Commands.literal("set")
+                        .then(Commands.argument("second", FloatArgumentType.floatArg(0))
+                                .executes(ctx -> setTickReplay(ctx.getSource(),
+                                        null, FloatArgumentType.getFloat(ctx, "second")
+                                ))
+                                .then(Commands.argument("viewer_entity", EntityArgument.entity())
+                                        .executes(ctx -> setTickReplay(ctx.getSource(),
+                                                EntityArgument.getEntity(ctx, "viewer_entity")
+                                                        instanceof TacViewEntity viewer ? viewer : null,
+                                                FloatArgumentType.getFloat(ctx, "second")
+                                        ))
+                                )
+                        )
+                )
                 .then(Commands.literal("create_viewer")
                         .executes(ctx -> createViewer(ctx.getSource(),
                                 null, -1, -1
@@ -205,6 +219,13 @@ public class TacViewCommands {
         entity = fixViewEntity(source, entity);
         if (entity == null) return 0;
         entity.tickStep(steps);
+        return 1;
+    }
+
+    private int setTickReplay(@NotNull CommandSourceStack source, @Nullable TacViewEntity entity, float second) {
+        entity = fixViewEntity(source, entity);
+        if (entity == null) return 0;
+        entity.setPlaybackSecond(second);
         return 1;
     }
 
