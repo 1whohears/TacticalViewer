@@ -1,8 +1,8 @@
 package com.onewhohears.tacview.client.core;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.math.UtilGeometry;
@@ -18,6 +18,7 @@ import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -50,6 +51,8 @@ public class ClientPlayback {
 
     private int[][] heightMap = null;
     private long heightMapUpdateTime = 0;
+    private VertexBuffer heightmapBuffer;
+    private boolean heightmapDirty = true;
 
     public ClientPlayback(@NotNull TacViewEntity parent) {
         this.parent = parent;
@@ -141,41 +144,38 @@ public class ClientPlayback {
         stack.scale(scale, scale, scale);
 
         if (TacViewMod.isDHLoaded) {
+            m.getProfiler().push("Tac View Replay Gen Height Map");
+
             int lod = (int) Math.ceil(Math.sqrt(size.x * size.z * MAX_TILES_INV));
             stack.translate(0, 0.01f / scale, 0);
-            m.getProfiler().push("Tac View Replay Gen Height Map");
+
             updateHeightMap(m.level, minBound, maxBound, lod);
+
+            if (heightmapDirty) {
+                float minY = m.level.getMinBuildHeight(), maxY = m.level.getMaxBuildHeight();
+                rebuildHeightmapMesh(center, lod, minY, maxY);
+            }
+
             m.getProfiler().pop();
             m.getProfiler().push("Tac View Replay Render Terrain");
-            VertexConsumer consumer = buffer.getBuffer(RenderType.debugQuads());
-            int minX = (int) (minBound.x - center.x), minZ = (int) (minBound.z - center.z);
-            float minY = m.level.getMinBuildHeight(), maxY = m.level.getMaxBuildHeight();
-            for (int x = 0; x < heightMap.length; ++x) {
-                for (int z = 0; z < heightMap[x].length; ++z) {
-                    int h = (int) (heightMap[x][z] - center.y);
-                    int green = (int) Math.min((heightMap[x][z] - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF);
-                    stack.pushPose();
-                    stack.translate(minX + x * lod, h, minZ + z * lod);
-                    drawTopSquare(stack, consumer, packedLight, lod, RED, green, BLUE);
 
-                    if (x < heightMap.length - 1 && heightMap[x + 1][z] != heightMap[x][z]) {
-                        stack.pushPose();
-                        stack.translate(lod, 0, 0);
-                        drawXSquare(stack, consumer, packedLight, lod, RED, green, BLUE,
-                                heightMap[x + 1][z] - heightMap[x][z]);
-                        stack.popPose();
-                    }
-                    if (z < heightMap[x].length - 1 && heightMap[x][z + 1] != heightMap[x][z]) {
-                        stack.pushPose();
-                        stack.translate(0, 0, lod);
-                        drawZSquare(stack, consumer, packedLight, lod, RED, green, BLUE,
-                                heightMap[x][z + 1] - heightMap[x][z]);
-                        stack.popPose();
-                    }
+            if (heightmapBuffer != null) {
+                Vec3 cam = m.gameRenderer.getMainCamera().getPosition();
 
-                    stack.popPose();
-                }
+                stack.pushPose();
+                //stack.translate(-size.x*0.5, 0, -size.z*0.5);
+                //stack.translate(center.x, 0, center.z);
+                // FIXME render position???
+
+                RenderSystem.setShader(GameRenderer::getPositionColorShader);
+
+                heightmapBuffer.bind();
+                heightmapBuffer.drawWithShader(stack.last().pose(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+                VertexBuffer.unbind();
+
+                stack.popPose();
             }
+
             m.getProfiler().pop();
         }
 
@@ -219,6 +219,7 @@ public class ClientPlayback {
         if (heightMap == null || System.currentTimeMillis() - heightMapUpdateTime >= HEIGHT_MAP_UPDATE_RATE) {
             heightMap = TVDependencySafety.getDHHeightMap(level, minBound, maxBound, lod);
             heightMapUpdateTime = System.currentTimeMillis();
+            heightmapDirty = true;
         }
     }
 
@@ -261,113 +262,79 @@ public class ClientPlayback {
         LOGGER.error(reason);
     }
 
-    private void drawXSquare(PoseStack poseStack, VertexConsumer consumer,
-                               int packedLight, float size, int red, int green, int blue, int height) {
-        Matrix4f matrix = poseStack.last().pose();
-        Matrix3f normalMatrix = poseStack.last().normal();
-        consumer.vertex(matrix, 0, 0, 0)
-                .color(red, green, blue, 255)
-                .uv(0, 0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, 0, 0, size)
-                .color(red, green, blue, 255)
-                .uv(0, 1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, 0, height, size)
-                .color(red, green, blue, 255)
-                .uv(1, 1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, 0, height, 0)
-                .color(red, green, blue, 255)
-                .uv(1, 0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-    }
-
-    private void drawZSquare(PoseStack poseStack, VertexConsumer consumer,
-                             int packedLight, float size, int red, int green, int blue, int height) {
-        Matrix4f matrix = poseStack.last().pose();
-        Matrix3f normalMatrix = poseStack.last().normal();
-        consumer.vertex(matrix, 0, 0, 0)
-                .color(red, green, blue, 255)
-                .uv(0, 0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, size, 0, 0)
-                .color(red, green, blue, 255)
-                .uv(0, 1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, size, height, 0)
-                .color(red, green, blue, 255)
-                .uv(1, 1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, 0, height, 0)
-                .color(red, green, blue, 255)
-                .uv(1, 0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-    }
-
-    private void drawTopSquare(PoseStack poseStack, VertexConsumer consumer,
-                               int packedLight, float size, int red, int green, int blue) {
-        Matrix4f matrix = poseStack.last().pose();
-        Matrix3f normalMatrix = poseStack.last().normal();
-        consumer.vertex(matrix, 0, 0, 0)
-                .color(red, green, blue, 255)
-                .uv(0, 0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, 0, 0, size)
-                .color(red, green, blue, 255)
-                .uv(0, 1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, size, 0, size)
-                .color(red, green, blue, 255)
-                .uv(1, 1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-        consumer.vertex(matrix, size, 0, 0)
-                .color(red, green, blue, 255)
-                .uv(1, 0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(packedLight)
-                .normal(normalMatrix, 0, 1, 0)
-                .endVertex();
-    }
-
     public TacViewEntity getParent() {
         return parent;
     }
 
     public List<Component> getOverlayEntityInfo() {
         return overlayEntityInfo;
+    }
+
+    private void rebuildHeightmapMesh(Vec3 center, float lod, float minY, float maxY) {
+        if (heightMap == null) return;
+
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+
+        int minX = -(heightMap.length / 2);
+        int minZ = -(heightMap[0].length / 2);
+
+        for (int x = 0; x < heightMap.length; x++) {
+            for (int z = 0; z < heightMap[x].length; z++) {
+
+                int worldY = heightMap[x][z];
+                float y = (float)(worldY - center.y);
+
+                float baseX = minX + x * lod;
+                float baseZ = minZ + z * lod;
+
+                float g = Math.min((worldY - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF) / 255f;
+                float r = RED / 255f;
+                float b = BLUE / 255f;
+
+                // TOP FACE
+                buffer.vertex(baseX, y, baseZ).color(r,g,b,1).endVertex();
+                buffer.vertex(baseX, y, baseZ + lod).color(r,g,b,1).endVertex();
+                buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
+                buffer.vertex(baseX + lod, y, baseZ).color(r,g,b,1).endVertex();
+
+                // X WALL FIXME 
+                if (x < heightMap.length - 1) {
+                    int nextY = heightMap[x + 1][z];
+                    if (nextY != worldY) {
+                        float dy = nextY - worldY;
+
+                        buffer.vertex(baseX + lod, y, baseZ).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y + dy, baseZ).color(r,g,b,1).endVertex();
+                    }
+                }
+
+                // Z WALL
+                if (z < heightMap[x].length - 1) {
+                    int nextY = heightMap[x][z + 1];
+                    if (nextY != worldY) {
+                        float dy = nextY - worldY;
+
+                        buffer.vertex(baseX, y, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
+                    }
+                }
+            }
+        }
+
+        if (heightmapBuffer != null) {
+            heightmapBuffer.close();
+        }
+
+        heightmapBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        heightmapBuffer.bind();
+        heightmapBuffer.upload(buffer.end());
+        VertexBuffer.unbind();
+
+        heightmapDirty = false;
     }
 }
