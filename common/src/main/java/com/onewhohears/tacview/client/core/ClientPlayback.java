@@ -20,8 +20,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -29,8 +27,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -160,12 +156,8 @@ public class ClientPlayback {
             m.getProfiler().push("Tac View Replay Render Terrain");
 
             if (heightmapBuffer != null) {
-                Vec3 cam = m.gameRenderer.getMainCamera().getPosition();
-
                 stack.pushPose();
-                //stack.translate(-size.x*0.5, 0, -size.z*0.5);
-                //stack.translate(center.x, 0, center.z);
-                // FIXME render position???
+                stack.translate(-size.x*0.5, 0, -size.z*0.5);
 
                 RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
@@ -276,17 +268,14 @@ public class ClientPlayback {
         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        int minX = -(heightMap.length / 2);
-        int minZ = -(heightMap[0].length / 2);
-
         for (int x = 0; x < heightMap.length; x++) {
             for (int z = 0; z < heightMap[x].length; z++) {
 
                 int worldY = heightMap[x][z];
                 float y = (float)(worldY - center.y);
 
-                float baseX = minX + x * lod;
-                float baseZ = minZ + z * lod;
+                float baseX = x * lod;
+                float baseZ = z * lod;
 
                 float g = Math.min((worldY - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF) / 255f;
                 float r = RED / 255f;
@@ -298,7 +287,7 @@ public class ClientPlayback {
                 buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
                 buffer.vertex(baseX + lod, y, baseZ).color(r,g,b,1).endVertex();
 
-                // X WALL FIXME 
+                // X WALL
                 if (x < heightMap.length - 1) {
                     int nextY = heightMap[x + 1][z];
                     if (nextY != worldY) {
@@ -318,9 +307,9 @@ public class ClientPlayback {
                         float dy = nextY - worldY;
 
                         buffer.vertex(baseX, y, baseZ + lod).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
                         buffer.vertex(baseX, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
                     }
                 }
             }
