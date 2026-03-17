@@ -38,7 +38,7 @@ public class ClientPlayback {
 
     private static final int RED = 0x22, GREEN = 0x99, BLUE = 0x22;
     private static final long HEIGHT_MAP_UPDATE_RATE = 4000;
-    private static final double MAX_TILES_INV = 1d / 10000d;
+    private static final double MAX_TILES_INV = 1d / 65536d;
 
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
