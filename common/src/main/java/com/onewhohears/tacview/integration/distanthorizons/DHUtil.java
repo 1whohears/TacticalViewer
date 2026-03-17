@@ -33,6 +33,7 @@ public class DHUtil {
                 } else {
                     heightMap[x][z] = point.payload.topYBlockPos;
                 }
+                // TODO generate a color map using point.payload.blockStateWrapper
             }
         }
         return heightMap;
