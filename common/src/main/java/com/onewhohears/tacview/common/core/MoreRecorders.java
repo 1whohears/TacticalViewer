@@ -1,15 +1,13 @@
 package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.onewhohears.tacview.client.core.ClientPlayback;
 import com.onewhohears.tacview.mixin.LivingEntityAccess;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +51,9 @@ public class MoreRecorders {
             return !entity.isRemoved() && entity.getHealth() > 0;
         }
         @Override
-        public void onPlaybackTick(@NotNull LivingEntity entity) {
+        public void onPlaybackTick(@NotNull LivingEntity entity, @NotNull ClientPlayback playback) {
             entity.calculateEntityAnimation(false);
-            super.onPlaybackTick((E) entity);
+            super.onPlaybackTick((E) entity, playback);
             entity.yHeadRot = entity.getYRot();
             entity.yHeadRotO = entity.getYRot();
             float yBody = Mth.rotLerp(0.25f, entity.yBodyRot, entity.getYRot());

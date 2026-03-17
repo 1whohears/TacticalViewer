@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilMCText;
 import com.onewhohears.onewholibs.util.UtilParse;
+import com.onewhohears.tacview.client.core.ClientPlayback;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -161,12 +162,13 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         return !entity.isRemoved();
     }
 
-    public void onPlaybackRender(@NotNull E entity, PoseStack stack, float yaw, @NotNull Vec3 renderPos,
+    public void onPlaybackRender(@NotNull E entity, @NotNull ClientPlayback playback,
+                                 PoseStack stack, float yaw, @NotNull Vec3 renderPos,
                                  float partialTick, MultiBufferSource buffer, int packedLight) {
 
     }
 
-    public void onPlaybackTick(@NotNull E entity) {
+    public void onPlaybackTick(@NotNull E entity, @NotNull ClientPlayback playback) {
         entity.xo = entity.getX();
         entity.yo = entity.getY();
         entity.zo = entity.getZ();
@@ -177,13 +179,13 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         entity.yRotO = entity.getYRot();
     }
 
-    public void onPlaybackVehicleTick(@NotNull E vehicle, @NotNull Entity passenger) {
+    public void onPlaybackVehicleTick(@NotNull E vehicle, @NotNull Entity passenger, @NotNull ClientPlayback playback) {
         if (!passenger.isPassenger() || !passenger.getRootVehicle().equals(vehicle)) {
             passenger.startRiding(vehicle, true);
         }
     }
 
-    public void onPlaybackEntitySetup(@NotNull E entity) {
+    public void onPlaybackEntitySetup(@NotNull E entity, @NotNull ClientPlayback playback) {
 
     }
 

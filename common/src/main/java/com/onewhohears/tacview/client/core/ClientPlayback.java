@@ -83,7 +83,7 @@ public class ClientPlayback {
             Entity fake = getCreateFakeEntity(uuid, entityTypeStr, recorder);
             if (fake == null) return;
 
-            recorder.onPlaybackTick(fake);
+            recorder.onPlaybackTick(fake, this);
 
             EntityKeyframe keyframe = recorder.interpolate(tick, 0);
             if (!keyframe.vehicleUUID.get().isEmpty()) {
@@ -92,7 +92,7 @@ public class ClientPlayback {
                 if (vehicleRecorder == null) return;
                 Entity vehicle = fakeEntities.get(vehicleUUID);
                 if (vehicle == null) return;
-                vehicleRecorder.onPlaybackVehicleTick(vehicle, fake);
+                vehicleRecorder.onPlaybackVehicleTick(vehicle, fake, this);
             } else if (fake.isPassenger()) {
                 fake.stopRiding();
             }
@@ -198,7 +198,7 @@ public class ClientPlayback {
                     float f = fake.getYRot();
                     Vec3 d = fake.position().subtract(center);
 
-                    recorder.onPlaybackRender(fake, stack, f, d, partialTick, buffer, packedLight);
+                    recorder.onPlaybackRender(fake, this, stack, f, d, partialTick, buffer, packedLight);
 
                     // TODO fix entities rendering under the height map
 
@@ -243,7 +243,7 @@ public class ClientPlayback {
                 return null;
             }
         }
-        recorder.onPlaybackEntitySetup(e);
+        recorder.onPlaybackEntitySetup(e, this);
         fakeEntities.put(uuid, e);
         return e;
     }
