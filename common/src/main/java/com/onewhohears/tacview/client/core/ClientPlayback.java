@@ -27,6 +27,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -159,6 +160,9 @@ public class ClientPlayback {
                 stack.pushPose();
                 stack.translate(-size.x*0.5, 0, -size.z*0.5);
 
+                RenderSystem.enableDepthTest();
+                RenderSystem.depthFunc(GL11.GL_LEQUAL);
+                RenderSystem.depthMask(true);
                 RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
                 heightmapBuffer.bind();
