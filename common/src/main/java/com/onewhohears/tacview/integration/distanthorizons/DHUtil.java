@@ -37,8 +37,6 @@ public class DHUtil {
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
         int yPos = (int) maxBound.y;
-        Set<Integer> colors = new HashSet<>();
-        BlockPos errorPos = null;
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
                 int xPos = (int) (minBound.x + x * lod);
@@ -53,19 +51,13 @@ public class DHUtil {
                     h = point.payload.topYBlockPos;
                 }
                 heightMap[x][z] = h;
-                //h -= 5;
-                //h = 63;
+                h -= 1;
+                point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
+                        levelWrapper, xPos, h, zPos, getTerrainCache());
                 int color = getColor(point.payload.blockStateWrapper, level, xPos, h, yPos);
-                if (color == 0 || color == -1) {
-                    //color = 0x00ff00;
-                    if (errorPos == null) errorPos = new BlockPos(xPos, h, zPos);
-                }
                 colorMap[x][z] = color;
-                //colorMap[x][z] = 0x00ff00;
-                colors.add(color);
             }
         }
-        System.out.println("errorPos = "+errorPos+" COLORS = "+colors);
         return new HeightMapData(heightMap, colorMap);
     }
 
@@ -79,17 +71,9 @@ public class DHUtil {
     }
 
     public static int getColor(IDhApiBlockStateWrapper state, Level level, int x, int y, int z) {
-        //if (!(state.getWrappedMcObject() instanceof BlockState blockState)) return 0;
+        if (!(state.getWrappedMcObject() instanceof BlockState blockState)) return 0;
         BlockPos blockPos = new BlockPos(x, y, z);
-        BlockState blockState = level.getBlockState(blockPos);
-        BlockColors blockColors = Minecraft.getInstance().getBlockColors();
-        int c = blockColors.getColor(level.getBlockState(blockPos), level, blockPos);
-        if (c == 0 || c == -1) {
-            c = blockState.getMapColor(level, blockPos).calculateRGBColor(MapColor.Brightness.NORMAL);
-            //System.out.println("COLOR 0 "+blockState+" "+blockPos.toShortString());
-        }
-        // FIXME colors not working bruh
-        return c;
+        return blockState.getMapColor(level, blockPos).calculateRGBColor(MapColor.Brightness.NORMAL);
     }
 
 }
