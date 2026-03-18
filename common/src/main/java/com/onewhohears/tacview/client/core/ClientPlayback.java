@@ -30,7 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class ClientPlayback {
 
@@ -46,7 +48,7 @@ public class ClientPlayback {
     private final List<Component> overlayEntityInfo = new ArrayList<>();
     private final Set<String> bannedEntityTypes = new HashSet<>();
 
-    private int[][] heightMap = null;
+    private HeightMapData heightMap = null;
     private long heightMapUpdateTime = 0;
     private VertexBuffer heightmapBuffer;
     private boolean heightmapDirty = true;
@@ -272,18 +274,23 @@ public class ClientPlayback {
         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        for (int x = 0; x < heightMap.length; x++) {
-            for (int z = 0; z < heightMap[x].length; z++) {
+        for (int x = 0; x < heightMap.heights().length; x++) {
+            for (int z = 0; z < heightMap.heights()[x].length; z++) {
 
-                int worldY = heightMap[x][z];
+                int worldY = heightMap.heights()[x][z];
                 float y = (float)(worldY - center.y);
 
                 float baseX = x * lod;
                 float baseZ = z * lod;
 
-                float g = Math.min((worldY - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF) / 255f;
+                /*float g = Math.min((worldY - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF) / 255f;
                 float r = RED / 255f;
-                float b = BLUE / 255f;
+                float b = BLUE / 255f;*/
+                int color = heightMap.colors()[x][z];
+                Color c = new Color(color);
+                float r = c.getRed() / 255f;
+                float g = c.getGreen() / 255f;
+                float b = c.getBlue() / 255f;
 
                 // TOP FACE
                 buffer.vertex(baseX, y, baseZ).color(r,g,b,1).endVertex();
@@ -292,8 +299,8 @@ public class ClientPlayback {
                 buffer.vertex(baseX + lod, y, baseZ).color(r,g,b,1).endVertex();
 
                 // X WALL
-                if (x < heightMap.length - 1) {
-                    int nextY = heightMap[x + 1][z];
+                if (x < heightMap.heights().length - 1) {
+                    int nextY = heightMap.heights()[x + 1][z];
                     if (nextY != worldY) {
                         float dy = nextY - worldY;
 
@@ -305,8 +312,8 @@ public class ClientPlayback {
                 }
 
                 // Z WALL
-                if (z < heightMap[x].length - 1) {
-                    int nextY = heightMap[x][z + 1];
+                if (z < heightMap.heights()[x].length - 1) {
+                    int nextY = heightMap.heights()[x][z + 1];
                     if (nextY != worldY) {
                         float dy = nextY - worldY;
 
