@@ -153,6 +153,16 @@ public class EntityKeyframe<E extends Entity> {
         return registerValue(new KeyframeValue.ItemStackV<>(name, entityReader, entitySetter));
     }
 
+    protected KeyframeValue.IntListV<E> registerIntListValue(String name, Function<E,List<Integer>> entityReader,
+                                                                 BiConsumer<E,List<Integer>> entitySetter) {
+        return registerValue(new KeyframeValue.IntListV<>(name, entityReader, entitySetter));
+    }
+
+    protected KeyframeValue.UUIDListV<E> registerUUIDListValue(String name, Function<E,List<UUID>> entityReader,
+                                                                 BiConsumer<E,List<UUID>> entitySetter) {
+        return registerValue(new KeyframeValue.UUIDListV<>(name, entityReader, entitySetter));
+    }
+
     public long getTick() {
         return tick;
     }

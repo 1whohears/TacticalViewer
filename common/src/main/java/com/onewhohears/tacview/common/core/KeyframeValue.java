@@ -1,5 +1,7 @@
 package com.onewhohears.tacview.common.core;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.onewhohears.onewholibs.util.UtilItem;
@@ -17,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -378,6 +381,86 @@ public abstract class KeyframeValue<T, E extends Entity> {
         @Override
         public boolean isEqual(@NotNull ItemStack other) {
             return ItemStack.isSameItemSameTags(get(), other);
+        }
+    }
+
+    public abstract static class ListV<T, E extends Entity> extends KeyframeValue<List<T>,E> {
+        public ListV(String name, Function<E, List<T>> entityReader, BiConsumer<E, List<T>> entitySetter) {
+            super(name, entityReader, entitySetter);
+        }
+        @Override
+        public void readFromData(JsonObject data) {
+            JsonArray ja = data.has(name) ? data.get(name).getAsJsonArray() : new JsonArray();
+            for (int i = 0; i < ja.size(); ++i) value.add(readFromArray(ja.get(i)));
+        }
+        public abstract T readFromArray(@NotNull JsonElement element);
+        @Override
+        public void writeToData(JsonObject data) {
+            JsonArray ja = new JsonArray();
+            for (T t : value) addToArray(t, ja);
+            data.add(name, ja);
+        }
+        public abstract void addToArray(@NotNull T value, @NotNull JsonArray ja);
+        @Override
+        public @NotNull List<T> getDefault() {
+            return new ArrayList<>();
+        }
+        @Override
+        public void setToLerp(@NotNull List<T> start, @NotNull List<T> end, float partial) {
+            value = start;
+        }
+        @Override
+        public boolean isEqual(@NotNull List<T> other) {
+            if (value.size() != other.size()) return false;
+            for (int i = 0; i < value.size(); ++i)
+                if (!isEqual(value.get(i), other.get(i)))
+                    return false;
+            return true;
+        }
+        public abstract boolean isEqual(@NotNull T a, @NotNull T b);
+    }
+
+    public static class IntListV<E extends Entity> extends ListV<Integer, E> {
+        public IntListV(String name, Function<E, List<Integer>> entityReader, BiConsumer<E, List<Integer>> entitySetter) {
+            super(name, entityReader, entitySetter);
+        }
+        @Override
+        public @NotNull List<Integer> get() {
+            return value;
+        }
+        @Override
+        public Integer readFromArray(@NotNull JsonElement element) {
+            return element.getAsInt();
+        }
+        @Override
+        public void addToArray(@NotNull Integer value, @NotNull JsonArray ja) {
+            ja.add(value);
+        }
+        @Override
+        public boolean isEqual(@NotNull Integer a, @NotNull Integer b) {
+            return Objects.equals(a, b);
+        }
+    }
+
+    public static class UUIDListV<E extends Entity> extends ListV<UUID, E> {
+        public UUIDListV(String name, Function<E, List<UUID>> entityReader, BiConsumer<E, List<UUID>> entitySetter) {
+            super(name, entityReader, entitySetter);
+        }
+        @Override
+        public @NotNull List<UUID> get() {
+            return value;
+        }
+        @Override
+        public UUID readFromArray(@NotNull JsonElement element) {
+            return UUID.fromString(element.getAsString());
+        }
+        @Override
+        public void addToArray(@NotNull UUID value, @NotNull JsonArray ja) {
+            ja.add(value.toString());
+        }
+        @Override
+        public boolean isEqual(@NotNull UUID a, @NotNull UUID b) {
+            return Objects.equals(a, b);
         }
     }
 
