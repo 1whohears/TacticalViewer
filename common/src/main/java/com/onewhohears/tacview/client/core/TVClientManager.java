@@ -10,6 +10,7 @@ import com.onewhohears.tacview.common.entity.TacViewEntity;
 import com.onewhohears.tacview.common.network.toserver.ToServerRequestSession;
 import com.onewhohears.tacview.common.network.toserver.ToServerUpdateViewer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ public class TVClientManager {
 
     @Nullable
     private TacViewEntity nearestViewer = null;
+    private Entity trackFakeEntity = null;
 
     public void tick() {
         findNearestViewer();
@@ -49,6 +51,20 @@ public class TVClientManager {
         if (TVKeyBinds.BACKWARD_TICK.consumeClick()) {
             sendViewerUpdateInput(ViewerInputs.BACKWARD_TICK);
         }
+        if (TVKeyBinds.TOGGLE_TRACK.consumeClick()) handleToggleTrack();
+    }
+
+    protected void handleToggleTrack() {
+        if (nearestViewer == null) return;
+        assert nearestViewer.playback != null;
+        if (trackFakeEntity == null)
+            trackFakeEntity = nearestViewer.playback.getFakeEntityToTrack();
+        else trackFakeEntity = null;
+    }
+
+    @Nullable
+    public Entity getTrackFakeEntity() {
+        return trackFakeEntity;
     }
 
     /**
@@ -74,7 +90,7 @@ public class TVClientManager {
             return;
         }
         if (m.level.getGameTime() % 10 != 0) return;
-        AABB aabb = AABB.ofSize(m.player.position(), 1, 1, 1).inflate(16);
+        AABB aabb = AABB.ofSize(m.player.position(), 1, 1, 1).inflate(32);
         List<TacViewEntity> list = m.level.getEntitiesOfClass(TacViewEntity.class, aabb);
         nearestViewer = TacViewCommands.findClosestEntity(m.player.position(), list);
     }

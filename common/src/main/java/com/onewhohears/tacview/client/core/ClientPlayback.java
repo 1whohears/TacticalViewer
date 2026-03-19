@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.onewholibs.util.math.UtilAngles;
 import com.onewhohears.onewholibs.util.math.UtilGeometry;
 import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.TacViewMod;
@@ -52,6 +53,9 @@ public class ClientPlayback {
     private long heightMapUpdateTime = 0;
     private VertexBuffer heightmapBuffer;
     private boolean heightmapDirty = true;
+    private Vec3 center = Vec3.ZERO;
+    private float scale = 1;
+    private Entity lookAtFakeEntity = null;
 
     public ClientPlayback(@NotNull TacViewEntity parent) {
         this.parent = parent;
@@ -73,10 +77,11 @@ public class ClientPlayback {
         Vec3 minBound = session.getMinBound();
         Vec3 maxBound = session.getMaxBound();
         Vec3 size = maxBound.subtract(minBound);
-        float scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
-        Vec3 center = minBound.add(size.multiply(0.5, 0, 0.5));
+        center = minBound.add(size.multiply(0.5, 0, 0.5));
+        scale = (float) Math.min(height/size.y, Math.min(width/size.x, width/size.z));
 
         overlayEntityInfo.clear();
+        lookAtFakeEntity = null;
         Minecraft m = Minecraft.getInstance();
         session.forEachRecorder((uuid, recorder) -> {
             String entityTypeStr = recorder.entityType.get();
@@ -100,15 +105,25 @@ public class ClientPlayback {
             }
 
             Vec3 eye = m.player.getEyePosition();
-            Vec3 d = fake.position().subtract(center);
-            Vec3 worldPos = parent.position().add(d.add(0,fake.getBbHeight()*0.5,0).scale(scale));
+            Vec3 worldPos = getFakeWorldPos(fake);
             boolean inCone = UtilGeometry.isPointInsideCone(worldPos, eye, m.player.getLookAngle(),
                     Math.abs(Math.atan2(fake.getBbWidth()*scale, worldPos.distanceTo(eye)))
                             *Mth.RAD_TO_DEG*4, width);
-            if (inCone) recorder.addOverlayInfo(overlayEntityInfo, fake, keyframe);
+            if (inCone) {
+                recorder.addOverlayInfo(overlayEntityInfo, fake, keyframe);
+                if (lookAtFakeEntity == null
+                        || fake.distanceToSqr(m.player) < lookAtFakeEntity.distanceToSqr(m.player)) {
+                    lookAtFakeEntity = fake;
+                }
+            }
         });
         List<RecordEvent> eventsAtTick = session.getRecordEventsAtTick(tick);
         eventsAtTick.forEach(event -> event.onEventPlayback(this));
+    }
+
+    public Vec3 getFakeWorldPos(@NotNull Entity fake) {
+        Vec3 d = fake.position().subtract(center);
+        return parent.position().add(d.add(0,fake.getBbHeight()*0.5,0).scale(scale));
     }
 
     /**
@@ -190,7 +205,9 @@ public class ClientPlayback {
             try {
                 EntityKeyframe keyframe = recorder.interpolate(tick, pt);
 
-                if (tick <= keyframe.getTick() + recorder.recordRate && tick >= keyframe.getTick() - recorder.recordRate) {
+                if (tick <= keyframe.getTick() + recorder.recordRate
+                        && tick >= keyframe.getTick() - recorder.recordRate) {
+                    // TODO don't render dead players/spectators
                     keyframe.writeToFakeEntity(fake);
 
                     float f = fake.getYRot();
@@ -211,6 +228,35 @@ public class ClientPlayback {
 
         stack.popPose();
         m.getProfiler().pop();
+
+        // FIXME this needs to be called in the camera event to avoid jittery camera while in motion
+        Entity track = TVClientManager.get().getTrackFakeEntity();
+        if (track != null) {
+            Vec3 worldPos = getFakeWorldPos(track);
+            Vec3 diff = worldPos.subtract(m.player.getEyePosition());
+            float yRot = UtilAngles.getYaw(diff);
+            float xRot = UtilAngles.getPitch(diff);
+            m.player.setYRot(yRot);
+            m.player.setXRot(xRot);
+            m.player.yRotO = yRot;
+            m.player.xRotO = xRot;
+        }
+    }
+
+    @Nullable
+    public Entity getFakeEntityToTrack() {
+        if (lookAtFakeEntity != null) return lookAtFakeEntity;
+        Minecraft m = Minecraft.getInstance();
+        Entity closestFake = null;
+        double closestDist = Double.MAX_VALUE;
+        for (Entity entity : fakeEntities.values()) {
+            double dist = m.player.distanceToSqr(entity);
+            if (dist < closestDist) {
+                closestFake = entity;
+                closestDist = dist;
+            }
+        }
+        return closestFake;
     }
 
     private void updateHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
