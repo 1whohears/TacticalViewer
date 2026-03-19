@@ -14,6 +14,13 @@ import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
 public class ToClientSendSession extends BaseS2CMessage {
 
     private final SessionState sessionState;
@@ -37,14 +44,32 @@ public class ToClientSendSession extends BaseS2CMessage {
     public ToClientSendSession(FriendlyByteBuf buffer) {
         sessionState = buffer.readEnum(SessionState.class);
         sessionId = buffer.readUtf();
-        sessionData = JsonParser.parseString(buffer.readUtf()).getAsJsonObject();
+        byte[] compressed = buffer.readByteArray();
+        GZIPInputStream gzip = null;
+        String json = null;
+        try {
+            gzip = new GZIPInputStream(new ByteArrayInputStream(compressed));
+            json = new String(gzip.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        sessionData = JsonParser.parseString(json).getAsJsonObject();
     }
 
     @Override
     public void write(FriendlyByteBuf buffer) {
         buffer.writeEnum(sessionState);
         buffer.writeUtf(sessionId);
-        buffer.writeUtf(sessionData.toString());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        GZIPOutputStream gzip = null;
+        try {
+            gzip = new GZIPOutputStream(baos);
+            gzip.write(sessionData.toString().getBytes(StandardCharsets.UTF_8));
+            gzip.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        buffer.writeByteArray(baos.toByteArray());
     }
 
     @Override
