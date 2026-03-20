@@ -17,9 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiFunction;
 
 /**
@@ -108,7 +106,8 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
         this.recordRate = recordRate;
     }
 
-    public EntityRecorder(@NotNull JsonObject data, @NotNull BiFunction<ServerLevel,UUID,E> entityFinder) {
+    public EntityRecorder(@NotNull JsonObject data, @NotNull BiFunction<ServerLevel,UUID,E> entityFinder,
+                          @NotNull RecordingSession session) {
         super(data);
         removeParentValues();
         recordRate = UtilParse.getIntSafe(data, "recordRate", 10);
@@ -120,7 +119,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
             JsonObject kfObject = kfArray.get(i).getAsJsonObject();
             K keyframe = readKeyframe(kfObject);
             if (keyframe == null) continue;
-            keyframe.readValuesFromData(kfObject, prevKeyframe);
+            keyframe.readValuesFromData(kfObject, prevKeyframe, session);
             keyframes.add(keyframe);
             prevKeyframe = keyframe;
         }
@@ -135,15 +134,16 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
     }
 
     @Override
-    protected void addSaveData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous) {
-        super.addSaveData(data, null);
+    protected void addSaveData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous,
+                               @NotNull RecordingSession session) {
+        super.addSaveData(data, null, session);
         data.remove("tick");
         data.addProperty("recordRate", recordRate);
         data.addProperty("prevRecordTime", prevRecordTime);
         JsonArray kfArray = new JsonArray();
         @Nullable K previousKeyframe = null;
         for (K keyframe : keyframes) {
-            kfArray.add(keyframe.getSaveData(previousKeyframe));
+            kfArray.add(keyframe.getSaveData(previousKeyframe, session));
             previousKeyframe = keyframe;
         }
         data.add("keyframes", kfArray);

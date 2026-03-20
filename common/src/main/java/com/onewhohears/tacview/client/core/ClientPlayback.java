@@ -9,10 +9,7 @@ import com.onewhohears.onewholibs.util.math.UtilAngles;
 import com.onewhohears.onewholibs.util.math.UtilGeometry;
 import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.TacViewMod;
-import com.onewhohears.tacview.common.core.EntityKeyframe;
-import com.onewhohears.tacview.common.core.EntityRecorder;
-import com.onewhohears.tacview.common.core.RecordingSession;
-import com.onewhohears.tacview.common.core.SessionManager;
+import com.onewhohears.tacview.common.core.*;
 import com.onewhohears.tacview.common.core.recordevent.RecordEvent;
 import com.onewhohears.tacview.common.entity.TacViewEntity;
 import net.minecraft.ReportedException;
@@ -93,8 +90,8 @@ public class ClientPlayback {
             recorder.onPlaybackTick(fake, this);
 
             EntityKeyframe keyframe = recorder.interpolate(tick, 0);
-            if (!keyframe.vehicleUUID.get().isEmpty()) {
-                UUID vehicleUUID = UUID.fromString(keyframe.vehicleUUID.get());
+            if (!keyframe.vehicleUUID.get().equals(KeyframeValue.UUIDV.DEFAULT_UUID)) {
+                UUID vehicleUUID = keyframe.vehicleUUID.get();
                 EntityRecorder vehicleRecorder = session.getRecorder(vehicleUUID);
                 if (vehicleRecorder == null) return;
                 Entity vehicle = fakeEntities.get(vehicleUUID);

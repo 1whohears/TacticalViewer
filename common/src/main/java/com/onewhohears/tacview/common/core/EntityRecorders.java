@@ -59,13 +59,13 @@ public class EntityRecorders {
     }
 
     @Nullable
-    public static EntityRecorder readEntityRecorder(@NotNull JsonObject data) {
+    public static EntityRecorder readEntityRecorder(@NotNull JsonObject data, @NotNull RecordingSession session) {
         String id = UtilParse.getStringSafe(data, "entityType", "");
         if (id.isEmpty()) return null;
         EntityRecorder recorder;
-        if (!RECORDER_FACTORIES.containsKey(id)) recorder = DEFAULT_RECORDER.read(data);
-        else recorder = RECORDER_FACTORIES.get(id).getRight().read(data);
-        recorder.readValuesFromData(data, null);
+        if (!RECORDER_FACTORIES.containsKey(id)) recorder = DEFAULT_RECORDER.read(data, session);
+        else recorder = RECORDER_FACTORIES.get(id).getRight().read(data, session);
+        recorder.readValuesFromData(data, null, session);
         return recorder;
     }
 
@@ -74,7 +74,7 @@ public class EntityRecorders {
     }
 
     public interface EntityRecorderReader {
-        @NotNull EntityRecorder read(@NotNull JsonObject data);
+        @NotNull EntityRecorder read(@NotNull JsonObject data, @NotNull RecordingSession session);
     }
 
 }

@@ -13,8 +13,8 @@ public class PlayerRecorder extends MoreRecorders.AbstractLivingRec<EntityKeyfra
         super(entity, recordRate, EntityGetter::getPlayerByUUID);
     }
 
-    public PlayerRecorder(@NotNull JsonObject data) {
-        super(data, EntityGetter::getPlayerByUUID);
+    public PlayerRecorder(@NotNull JsonObject data, @NotNull RecordingSession session) {
+        super(data, EntityGetter::getPlayerByUUID, session);
     }
 
     @Override

@@ -44,19 +44,19 @@ public abstract class KeyframeValue<T, E extends Entity> {
     public void setEntity(E entity) {
         entitySetter.accept(entity, value);
     }
-    public final void readFromData(JsonObject data, @Nullable T prevValue) {
+    public final void readFromData(JsonObject data, @Nullable T prevValue, @NotNull RecordingSession session) {
         if (!data.has(name) && prevValue != null) {
             value = prevValue;
         } else {
-            readFromData(data);
+            readFromData(data, session);
         }
     }
-    public abstract void readFromData(JsonObject data);
-    public final void writeToData(JsonObject data, @Nullable T prevValue) {
+    public abstract void readFromData(JsonObject data, @NotNull RecordingSession session);
+    public final void writeToData(JsonObject data, @Nullable T prevValue, @NotNull RecordingSession session) {
         if (prevValue != null && isEqual(prevValue)) return;
-        writeToData(data);
+        writeToData(data, session);
     }
-    public abstract void writeToData(JsonObject data);
+    public abstract void writeToData(JsonObject data, @NotNull RecordingSession session);
     @NotNull public abstract T get();
     @NotNull public abstract T getDefault();
     public abstract void setToLerp(@NotNull T start, @NotNull T end, float partial);
@@ -78,11 +78,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             value = UtilParse.getBooleanSafe(data, name, false);
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             data.addProperty(name, value);
         }
         @Override
@@ -108,11 +108,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             value = UtilParse.getIntSafe(data, name, 0);
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             data.addProperty(name, value);
         }
         @Override
@@ -138,11 +138,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             value = !data.has(name) ? 0 : data.get(name).getAsLong();
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             data.addProperty(name, value);
         }
         @Override
@@ -168,11 +168,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             value = UtilParse.getFloatSafe(data, name, 0);
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             data.addProperty(name, value);
         }
         @Override
@@ -208,11 +208,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             value = UtilParse.readVec3(data, name);
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             UtilParse.writeVec3(data, name, value);
         }
         @Override
@@ -244,12 +244,18 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
-            value = UUID.fromString(UtilParse.getStringSafe(data, name, ""));
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
+            if (session.isCompressedUUIDs()) {
+                int id = UtilParse.getIntSafe(data, name, 0);
+                value = session.getOtherUuid(id);
+            } else {
+                value = UUID.fromString(UtilParse.getStringSafe(data, name, ""));
+            }
         }
         @Override
-        public void writeToData(JsonObject data) {
-            data.addProperty(name, value.toString());
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
+            int id = session.getUuidId(value);
+            data.addProperty(name, id);
         }
         @Override
         public @NotNull UUID get() {
@@ -274,11 +280,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             value = UtilParse.getStringSafe(data, name, "");
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             data.addProperty(name, value);
         }
         @Override
@@ -308,11 +314,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             this.defaultValue = enumClass.getEnumConstants()[0];
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             value = UtilParse.getEnumSafe(data, name, enumClass);
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             UtilParse.writeEnum(data, name, value);
         }
         @Override
@@ -338,7 +344,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             JsonObject itemData = UtilParse.getJsonSafe(data, name);
             String item = UtilParse.getStringSafe(itemData, "item", "minecraft:air");
             int count = UtilParse.getIntSafe(itemData, "count", 1);
@@ -358,7 +364,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
             value = stack;
         }
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             JsonObject itemData = new JsonObject();
             itemData.addProperty("item", UtilItem.getItemKeyString(value.getItem()));
             itemData.addProperty("count", value.getCount());
@@ -389,18 +395,18 @@ public abstract class KeyframeValue<T, E extends Entity> {
             super(name, entityReader, entitySetter);
         }
         @Override
-        public void readFromData(JsonObject data) {
+        public void readFromData(JsonObject data, @NotNull RecordingSession session) {
             JsonArray ja = data.has(name) ? data.get(name).getAsJsonArray() : new JsonArray();
-            for (int i = 0; i < ja.size(); ++i) value.add(readFromArray(ja.get(i)));
+            for (int i = 0; i < ja.size(); ++i) value.add(readFromArray(ja.get(i), session));
         }
-        public abstract T readFromArray(@NotNull JsonElement element);
+        public abstract T readFromArray(@NotNull JsonElement element, @NotNull RecordingSession session);
         @Override
-        public void writeToData(JsonObject data) {
+        public void writeToData(JsonObject data, @NotNull RecordingSession session) {
             JsonArray ja = new JsonArray();
-            for (T t : value) addToArray(t, ja);
+            for (T t : value) addToArray(t, ja, session);
             data.add(name, ja);
         }
-        public abstract void addToArray(@NotNull T value, @NotNull JsonArray ja);
+        public abstract void addToArray(@NotNull T value, @NotNull JsonArray ja, @NotNull RecordingSession session);
         @Override
         public @NotNull List<T> getDefault() {
             return new ArrayList<>();
@@ -429,11 +435,11 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public Integer readFromArray(@NotNull JsonElement element) {
+        public Integer readFromArray(@NotNull JsonElement element, @NotNull RecordingSession session) {
             return element.getAsInt();
         }
         @Override
-        public void addToArray(@NotNull Integer value, @NotNull JsonArray ja) {
+        public void addToArray(@NotNull Integer value, @NotNull JsonArray ja, @NotNull RecordingSession session) {
             ja.add(value);
         }
         @Override
@@ -451,12 +457,13 @@ public abstract class KeyframeValue<T, E extends Entity> {
             return value;
         }
         @Override
-        public UUID readFromArray(@NotNull JsonElement element) {
-            return UUID.fromString(element.getAsString());
+        public UUID readFromArray(@NotNull JsonElement element, @NotNull RecordingSession session) {
+            if (session.isCompressedUUIDs()) return session.getOtherUuid(element.getAsInt());
+            else return UUID.fromString(element.getAsString());
         }
         @Override
-        public void addToArray(@NotNull UUID value, @NotNull JsonArray ja) {
-            ja.add(value.toString());
+        public void addToArray(@NotNull UUID value, @NotNull JsonArray ja, @NotNull RecordingSession session) {
+            ja.add(session.getUuidId(value));
         }
         @Override
         public boolean isEqual(@NotNull UUID a, @NotNull UUID b) {

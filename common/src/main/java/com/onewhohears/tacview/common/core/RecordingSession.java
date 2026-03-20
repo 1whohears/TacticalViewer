@@ -2,6 +2,7 @@ package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilParse;
 import com.onewhohears.tacview.common.core.recordevent.RecordEvent;
@@ -15,12 +16,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class RecordingSession {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final String sessionId;
     private final Map<UUID,EntityRecorder> RECORDERS = new HashMap<>();
@@ -29,9 +33,11 @@ public class RecordingSession {
     private final int defaultRecordRate;
     private final int maxLength;
     private final ResourceKey<Level> dimension;
+    private final Map<UUID, Integer> otherUUIDs = new HashMap<>();
     private int length = 0;
     private long sessionStartTime = -1;
     private boolean recordingComplete = false;
+    private boolean isCompressedUUIDs = false;
     private Vec3 minBound = Vec3.ZERO, maxBound = Vec3.ZERO;
 
     public void addEntityToRecord(@NotNull Entity entity) {
@@ -86,10 +92,21 @@ public class RecordingSession {
         this.recordingComplete = UtilParse.getBooleanSafe(data, "recordingComplete", false);
         this.dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.tryParse(
                 UtilParse.getStringSafe(data, "dimension", "minecraft:overworld")));
+        this.isCompressedUUIDs = data.has("otherUUIDs");
+        JsonObject otherUUIDsJson = UtilParse.getJsonSafe(data, "otherUUIDs");
+        LOGGER.info("otherUUIDs {}", otherUUIDsJson.toString());
+        otherUUIDsJson.entrySet().forEach(entry -> {
+            String idStr = entry.getKey();
+            int id;
+            try { id = Integer.parseInt(idStr); }
+            catch (NumberFormatException e) { return; }
+            UUID uuid = UUID.fromString(entry.getValue().getAsString());
+            this.otherUUIDs.put(uuid, id);
+        });
         JsonArray recorderArray = !data.has("recorders") ? new JsonArray() : data.get("recorders").getAsJsonArray();
         for (int i = 0; i < recorderArray.size(); ++i) {
             JsonObject recObject = recorderArray.get(i).getAsJsonObject();
-            EntityRecorder recorder = EntityRecorders.readEntityRecorder(recObject);
+            EntityRecorder recorder = EntityRecorders.readEntityRecorder(recObject, this);
             if (recorder == null) continue;
             RECORDERS.put(recorder.uuid.get(), recorder);
         }
@@ -114,13 +131,20 @@ public class RecordingSession {
         data.addProperty("recordingComplete", recordingComplete);
         data.addProperty("dimension", dimension.location().toString());
         JsonArray recorderArray = new JsonArray();
-        for (EntityRecorder recorder : RECORDERS.values()) recorderArray.add(recorder.getSaveData(null));
+        for (EntityRecorder recorder : RECORDERS.values()) {
+            recorderArray.add(recorder.getSaveData(null, this));
+        }
         data.add("recorders", recorderArray);
         UtilParse.writeVec3(data, "minBound", minBound);
         UtilParse.writeVec3(data, "maxBound", maxBound);
         JsonArray eventArray = new JsonArray();
         for (RecordEvent event : events) eventArray.add(event.getSaveData());
         data.add("events", eventArray);
+        JsonObject otherUUIDsJson = new JsonObject();
+        this.otherUUIDs.forEach((otherUUID, id) ->
+                otherUUIDsJson.addProperty(id+"", otherUUID.toString())
+        );
+        data.add("otherUUIDs", otherUUIDsJson);
         return data;
     }
 
@@ -220,5 +244,26 @@ public class RecordingSession {
 
     public boolean hasEntity(@NotNull Entity entity) {
         return RECORDERS.containsKey(entity.getUUID());
+    }
+
+    public int getUuidId(UUID uuid) {
+        if (otherUUIDs.containsKey(uuid)) return otherUUIDs.get(uuid);
+        int newId = otherUUIDs.size();
+        otherUUIDs.put(uuid, newId);
+        return newId;
+    }
+
+    public UUID getOtherUuid(int id) {
+        if (!otherUUIDs.containsValue(id)) return KeyframeValue.UUIDV.DEFAULT_UUID;
+        for (Map.Entry<UUID,Integer> entry : otherUUIDs.entrySet()) {
+            if (entry.getValue() == id) {
+                return entry.getKey();
+            }
+        }
+        return KeyframeValue.UUIDV.DEFAULT_UUID;
+    }
+
+    public boolean isCompressedUUIDs() {
+        return isCompressedUUIDs;
     }
 }

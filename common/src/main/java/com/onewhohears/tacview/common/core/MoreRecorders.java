@@ -19,8 +19,8 @@ public class MoreRecorders {
     public static final BiFunction<ServerLevel,UUID,LivingEntity> DEFAULT_LIVING_GETTER =
             (level, uuid) -> level.getEntity(uuid) instanceof LivingEntity liv ? liv : null;
     public static class DefaultEntityRecorder extends EntityRecorder<EntityKeyframe<Entity>,Entity> {
-        public DefaultEntityRecorder(@NotNull JsonObject data) {
-            super(data, DEFAULT_ENTITY_GETTER);
+        public DefaultEntityRecorder(@NotNull JsonObject data, @NotNull RecordingSession session) {
+            super(data, DEFAULT_ENTITY_GETTER, session);
         }
         @Override
         protected @Nullable EntityKeyframe<Entity> readKeyframe(@NotNull JsonObject keyframe) {
@@ -43,8 +43,9 @@ public class MoreRecorders {
         public AbstractLivingRec(@NotNull E entity, int recordRate, @NotNull BiFunction<ServerLevel,UUID,E> entityFinder) {
             super(entity, recordRate, entityFinder);
         }
-        public AbstractLivingRec(@NotNull JsonObject data, @NotNull BiFunction<ServerLevel,UUID,E> entityFinder) {
-            super(data, entityFinder);
+        public AbstractLivingRec(@NotNull JsonObject data, @NotNull BiFunction<ServerLevel,UUID,E> entityFinder,
+                                 @NotNull RecordingSession session) {
+            super(data, entityFinder, session);
         }
         @Override
         protected boolean shouldRecord(@NotNull LivingEntity entity) {
@@ -77,8 +78,8 @@ public class MoreRecorders {
         public LivingRec(@NotNull LivingEntity entity, int recordRate) {
             super(entity, recordRate, DEFAULT_LIVING_GETTER);
         }
-        public LivingRec(@NotNull JsonObject data) {
-            super(data, DEFAULT_LIVING_GETTER);
+        public LivingRec(@NotNull JsonObject data, @NotNull RecordingSession session) {
+            super(data, DEFAULT_LIVING_GETTER, session);
         }
         @Override
         protected @Nullable EntityKeyframe<LivingEntity> readKeyframe(@NotNull JsonObject keyframe) {

@@ -34,8 +34,8 @@ public class EntityKeyframe<E extends Entity> {
     }, Entity::setDeltaMovement);
     public final KeyframeValue.FloatV<E> xRot = registerAngleValue("xRot", Entity::getXRot, Entity::setXRot);
     public final KeyframeValue.FloatV<E> yRot = registerAngleValue("yRot", Entity::getYRot, Entity::setYRot);
-    public final KeyframeValue.StringV<E> vehicleUUID = registerStringValue("vehicleUUID",
-            entity -> entity.isPassenger() ? entity.getRootVehicle().getStringUUID() : "",
+    public final KeyframeValue.UUIDV<E> vehicleUUID = registerUUIDValue("vehicleUUID",
+            entity -> entity.isPassenger() ? entity.getRootVehicle().getUUID() : KeyframeValue.UUIDV.DEFAULT_UUID,
             (entity, value) -> {});
 
     protected long tick;
@@ -64,9 +64,10 @@ public class EntityKeyframe<E extends Entity> {
         values.forEach((name, value) -> value.readFromEntity(entity));
     }
 
-    public void readValuesFromData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous) {
+    public void readValuesFromData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous,
+                                   @NotNull RecordingSession session) {
         values.forEach((name, value) -> value.readFromData(data,
-                previous != null ? previous.values.get(name).get() : null));
+                previous != null ? previous.values.get(name).get() : null, session));
     }
 
     public static <K extends EntityKeyframe<E>, E extends Entity> void setToLerp(
@@ -86,16 +87,18 @@ public class EntityKeyframe<E extends Entity> {
         });
     }
 
-    public final @NotNull JsonObject getSaveData(@Nullable EntityKeyframe<?> previous) {
+    public final @NotNull JsonObject getSaveData(@Nullable EntityKeyframe<?> previous,
+                                                 @NotNull RecordingSession session) {
         JsonObject data = new JsonObject();
-        addSaveData(data, previous);
+        addSaveData(data, previous, session);
         return data;
     }
 
-    protected void addSaveData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous) {
+    protected void addSaveData(@NotNull JsonObject data, @Nullable EntityKeyframe<?> previous,
+                               @NotNull RecordingSession session) {
         data.addProperty("tick", tick);
         values.forEach((name, value) -> value.writeToData(data,
-                previous != null ? previous.values.get(name).get() : null));
+                previous != null ? previous.values.get(name).get() : null, session));
     }
 
     protected <K extends KeyframeValue<?,E>> K registerValue(K value) {
