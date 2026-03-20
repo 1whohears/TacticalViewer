@@ -249,7 +249,7 @@ public abstract class KeyframeValue<T, E extends Entity> {
                 int id = UtilParse.getIntSafe(data, name, 0);
                 value = session.getOtherUuid(id);
             } else {
-                value = UUID.fromString(UtilParse.getStringSafe(data, name, ""));
+                value = UUID.fromString(UtilParse.getStringSafe(data, name, DEFAULT_UUID_STR));
             }
         }
         @Override

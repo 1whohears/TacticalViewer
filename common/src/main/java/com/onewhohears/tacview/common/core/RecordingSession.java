@@ -37,7 +37,7 @@ public class RecordingSession {
     private int length = 0;
     private long sessionStartTime = -1;
     private boolean recordingComplete = false;
-    private boolean isCompressedUUIDs = false;
+    private boolean isCompressedUUIDs = true;
     private Vec3 minBound = Vec3.ZERO, maxBound = Vec3.ZERO;
 
     public void addEntityToRecord(@NotNull Entity entity) {
@@ -94,7 +94,6 @@ public class RecordingSession {
                 UtilParse.getStringSafe(data, "dimension", "minecraft:overworld")));
         this.isCompressedUUIDs = data.has("otherUUIDs");
         JsonObject otherUUIDsJson = UtilParse.getJsonSafe(data, "otherUUIDs");
-        LOGGER.info("otherUUIDs {}", otherUUIDsJson.toString());
         otherUUIDsJson.entrySet().forEach(entry -> {
             String idStr = entry.getKey();
             int id;
