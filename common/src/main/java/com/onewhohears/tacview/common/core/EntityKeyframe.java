@@ -48,7 +48,7 @@ public class EntityKeyframe<E extends Entity> {
         tick = !data.has("tick") ? 0 : data.get("tick").getAsLong();
     }
 
-    protected EntityKeyframe() {
+    public EntityKeyframe() {
     }
 
     public void writeToFakeEntity(@NotNull E entity) {
