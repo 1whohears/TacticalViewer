@@ -1,5 +1,6 @@
 package com.onewhohears.tacview.integration.distanthorizons;
 
+import com.mojang.logging.LogUtils;
 import com.onewhohears.tacview.client.core.HeightMapData;
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
@@ -7,21 +8,17 @@ import com.seibel.distanthorizons.api.interfaces.data.IDhApiTerrainDataCache;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.objects.DhApiResult;
 import com.seibel.distanthorizons.api.objects.data.DhApiTerrainDataPoint;
-import dev.architectury.injectables.annotations.ExpectPlatform;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.HashSet;
-import java.util.Set;
+import org.slf4j.Logger;
 
 public class DHUtil {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static HeightMapData getHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
         Iterable<IDhApiLevelWrapper> levelWrappers = DhApi.Delayed.worldProxy.getAllLoadedLevelsWithDimensionNameLike(
@@ -33,9 +30,13 @@ public class DHUtil {
         int[][] heightMap = new int[xLength][zLength];
         int[][] colorMap = new int[xLength][zLength];
 
-        if (!levelWrappers.iterator().hasNext()) return new HeightMapData(xLength, zLength);
+        if (!levelWrappers.iterator().hasNext()) {
+            LOGGER.warn("DHUtil returned an empty height map because no level wrapper was found!");
+            return new HeightMapData(xLength, zLength);
+        }
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
+        boolean oneGoodPayload = false;
         int yPos = (int) maxBound.y;
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
@@ -44,6 +45,7 @@ public class DHUtil {
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 if (!point.success || point.payload == null) continue;
+                oneGoodPayload = true;
                 int h;
                 if (point.payload.topYBlockPos > 200) {
                     h = point.payload.bottomYBlockPos;
@@ -57,6 +59,9 @@ public class DHUtil {
                 int color = getColor(point.payload.blockStateWrapper, level, xPos, h, yPos);
                 colorMap[x][z] = color; // FIXME why is water red?
             }
+        }
+        if (!oneGoodPayload) {
+            LOGGER.warn("DHUtil returned an empty height map because no DHApi data point calls were successful!");
         }
         return new HeightMapData(heightMap, colorMap);
     }
