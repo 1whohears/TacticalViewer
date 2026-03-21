@@ -7,6 +7,7 @@ import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.math.UtilAngles;
 import com.onewhohears.onewholibs.util.math.UtilGeometry;
+import com.onewhohears.tacview.Config;
 import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.TacViewMod;
 import com.onewhohears.tacview.common.core.*;
@@ -38,7 +39,6 @@ public class ClientPlayback {
 
     private static final int RED = 0x22, GREEN = 0x99, BLUE = 0x22;
     private static final long HEIGHT_MAP_UPDATE_RATE = 4000;
-    private static final double MAX_TILES_INV = 1d / 65536d;
 
     private final TacViewEntity parent;
     private final Map<UUID,Entity> fakeEntities = new HashMap<>();
@@ -157,7 +157,7 @@ public class ClientPlayback {
         if (TacViewMod.isDHLoaded) {
             m.getProfiler().push("Tac View Replay Gen Height Map");
 
-            int lod = (int) Math.ceil(Math.sqrt(size.x * size.z * MAX_TILES_INV));
+            int lod = (int) Math.ceil(Math.sqrt(size.x * size.z / Config.CLIENT.maxHeightMapTiles.get()));
             stack.translate(0, 0.01f / scale, 0);
 
             updateHeightMap(m.level, minBound, maxBound, lod);
