@@ -44,7 +44,7 @@ public class DHUtil {
                 int zPos = (int) (minBound.z + z * lod);
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
-                if (!point.success || point.payload == null) continue;
+                if (!point.success || point.payload == null) continue; // FIXME why does this fail on large maps?
                 oneGoodPayload = true;
                 int h;
                 if (point.payload.topYBlockPos > 200) {
