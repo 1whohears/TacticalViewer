@@ -57,7 +57,7 @@ public class DHUtil {
                 point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, h, zPos, getTerrainCache());
                 int color = getColor(point.payload.blockStateWrapper, level, xPos, h, yPos);
-                colorMap[x][z] = color; // FIXME why is water red?
+                colorMap[x][z] = color;
             }
         }
         if (!oneGoodPayload) {

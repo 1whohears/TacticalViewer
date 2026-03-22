@@ -20,6 +20,7 @@ import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -326,20 +327,15 @@ public class ClientPlayback {
                 float baseX = x * lod;
                 float baseZ = z * lod;
 
-                /*float g = Math.min((worldY - minY) / (maxY - minY) * 0xDD + 0x22, 0xFF) / 255f;
-                float r = RED / 255f;
-                float b = BLUE / 255f;*/
                 int color = heightMap.colors()[x][z];
                 Color c = new Color(color);
-                float r = c.getRed() / 255f;
-                float g = c.getGreen() / 255f;
-                float b = c.getBlue() / 255f;
+                color = FastColor.ARGB32.color(0xff, c.getBlue(), c.getGreen(), c.getRed());
 
                 // TOP FACE
-                buffer.vertex(baseX, y, baseZ).color(r,g,b,1).endVertex();
-                buffer.vertex(baseX, y, baseZ + lod).color(r,g,b,1).endVertex();
-                buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
-                buffer.vertex(baseX + lod, y, baseZ).color(r,g,b,1).endVertex();
+                buffer.vertex(baseX, y, baseZ).color(color).endVertex();
+                buffer.vertex(baseX, y, baseZ + lod).color(color).endVertex();
+                buffer.vertex(baseX + lod, y, baseZ + lod).color(color).endVertex();
+                buffer.vertex(baseX + lod, y, baseZ).color(color).endVertex();
 
                 // X WALL
                 if (x < heightMap.heights().length - 1) {
@@ -347,10 +343,10 @@ public class ClientPlayback {
                     if (nextY != worldY) {
                         float dy = nextY - worldY;
 
-                        buffer.vertex(baseX + lod, y, baseZ).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX + lod, y + dy, baseZ).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX + lod, y, baseZ).color(color).endVertex();
+                        buffer.vertex(baseX + lod, y, baseZ + lod).color(color).endVertex();
+                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(color).endVertex();
+                        buffer.vertex(baseX + lod, y + dy, baseZ).color(color).endVertex();
                     }
                 }
 
@@ -360,10 +356,10 @@ public class ClientPlayback {
                     if (nextY != worldY) {
                         float dy = nextY - worldY;
 
-                        buffer.vertex(baseX, y, baseZ + lod).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(r,g,b,1).endVertex();
-                        buffer.vertex(baseX + lod, y, baseZ + lod).color(r,g,b,1).endVertex();
+                        buffer.vertex(baseX, y, baseZ + lod).color(color).endVertex();
+                        buffer.vertex(baseX, y + dy, baseZ + lod).color(color).endVertex();
+                        buffer.vertex(baseX + lod, y + dy, baseZ + lod).color(color).endVertex();
+                        buffer.vertex(baseX + lod, y, baseZ + lod).color(color).endVertex();
                     }
                 }
             }
