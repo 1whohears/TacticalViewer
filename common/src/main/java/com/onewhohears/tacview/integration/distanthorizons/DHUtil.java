@@ -19,8 +19,11 @@ import org.slf4j.Logger;
 public class DHUtil {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+    public static final long HEIGHT_MAP_GEN_TIMEOUT = 10000;
 
     public static HeightMapData getHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
+        long startTime = System.currentTimeMillis();
+
         Iterable<IDhApiLevelWrapper> levelWrappers = DhApi.Delayed.worldProxy.getAllLoadedLevelsWithDimensionNameLike(
                 level.dimension().location().getPath());
 
@@ -40,11 +43,15 @@ public class DHUtil {
         int yPos = (int) maxBound.y;
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
+                if (System.currentTimeMillis() - startTime > HEIGHT_MAP_GEN_TIMEOUT) {
+                    LOGGER.warn("DHUtil has taken more than 10 seconds to complete the height map! Will not finish!");
+                    return new HeightMapData(heightMap, colorMap);
+                }
                 int xPos = (int) (minBound.x + x * lod);
                 int zPos = (int) (minBound.z + z * lod);
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
-                if (!point.success || point.payload == null) continue; // FIXME why does this fail on large maps?
+                if (!point.success || point.payload == null) continue; // FIXME why does this sometimes fail on large maps?
                 oneGoodPayload = true;
                 int h;
                 if (point.payload.topYBlockPos > 200) {
