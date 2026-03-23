@@ -1,6 +1,7 @@
 package com.onewhohears.tacview.client.core;
 
 import com.google.gson.JsonObject;
+import com.onewhohears.onewholibs.util.math.UtilAngles;
 import com.onewhohears.tacview.client.input.TVKeyBinds;
 import com.onewhohears.tacview.client.overlay.PlaybackInfoOverlay;
 import com.onewhohears.tacview.common.command.TacViewCommands;
@@ -12,12 +13,14 @@ import com.onewhohears.tacview.common.network.toserver.ToServerUpdateViewer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class TVClientManager {
 
@@ -65,6 +68,18 @@ public class TVClientManager {
     @Nullable
     public Entity getTrackFakeEntity() {
         return trackFakeEntity;
+    }
+
+    /**
+     * CLIENT SIDE ONLY
+     */
+    public void playerLookAtTrackedEntity(Vec3 cameraPos, BiConsumer<Float,Float> setNewAngles) {
+        if (trackFakeEntity == null || nearestViewer == null || nearestViewer.playback == null) return;
+        Vec3 worldPos = nearestViewer.playback.getFakeWorldPos(trackFakeEntity);
+        Vec3 diff = worldPos.subtract(cameraPos);
+        float yRot = UtilAngles.getYaw(diff);
+        float xRot = UtilAngles.getPitch(diff);
+        setNewAngles.accept(xRot, yRot);
     }
 
     /**

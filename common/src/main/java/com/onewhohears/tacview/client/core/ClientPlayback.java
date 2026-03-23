@@ -226,19 +226,6 @@ public class ClientPlayback {
 
         stack.popPose();
         m.getProfiler().pop();
-
-        // FIXME this needs to be called in the camera event to avoid jittery camera while in motion
-        Entity track = TVClientManager.get().getTrackFakeEntity();
-        if (track != null) {
-            Vec3 worldPos = getFakeWorldPos(track);
-            Vec3 diff = worldPos.subtract(m.player.getEyePosition());
-            float yRot = UtilAngles.getYaw(diff);
-            float xRot = UtilAngles.getPitch(diff);
-            m.player.setYRot(yRot);
-            m.player.setXRot(xRot);
-            m.player.yRotO = yRot;
-            m.player.xRotO = xRot;
-        }
     }
 
     @Nullable

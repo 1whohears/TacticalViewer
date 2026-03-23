@@ -82,6 +82,8 @@ dependencies {
 }
 
 processResources {
+    from(project(":common").file("src/main/resources/tacview.accesswidener"))
+
     inputs.property 'version', project.version
 
     filesMatching('fabric.mod.json') {
