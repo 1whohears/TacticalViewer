@@ -53,6 +53,9 @@ public class DHUtil {
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 if (!point.success || point.payload == null) continue; // FIXME why does this sometimes fail on large maps?
                 oneGoodPayload = true;
+                // sometimes topYBlockPos is the build height limit, sometimes bottomYBlockPos is the bottom build limit.
+                // I still don't know why this happens or what the correct way to determine which height to use.
+                // this is a hacky way to figure out what the actual world height is.
                 int h;
                 if (point.payload.topYBlockPos > 200) {
                     h = point.payload.bottomYBlockPos;
