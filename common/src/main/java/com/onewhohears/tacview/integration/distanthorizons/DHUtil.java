@@ -16,6 +16,9 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class DHUtil {
 
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -40,6 +43,7 @@ public class DHUtil {
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
         boolean oneGoodPayload = false;
+        Set<String> messages = new HashSet<>();
         int yPos = (int) maxBound.y;
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
@@ -51,6 +55,7 @@ public class DHUtil {
                 int zPos = (int) (minBound.z + z * lod);
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
+                messages.add(point.message);
                 if (!point.success || point.payload == null) continue; // FIXME why does this sometimes fail on large maps?
                 oneGoodPayload = true;
                 // sometimes topYBlockPos is the build height limit, sometimes bottomYBlockPos is the bottom build limit.
@@ -73,6 +78,7 @@ public class DHUtil {
         if (!oneGoodPayload) {
             LOGGER.warn("DHUtil returned an empty height map because no DHApi data point calls were successful!");
         }
+        if (!messages.isEmpty()) LOGGER.info("DHUtil messages: {}", messages);
         return new HeightMapData(heightMap, colorMap);
     }
 
