@@ -56,7 +56,7 @@ public class DHUtil {
                 }
                 int xPos = (int) (minBound.x + x * lod);
                 int zPos = (int) (minBound.z + z * lod);
-                if (playerPos.distanceToSqr(xPos, playerPos.y, zPos) > 500 * 500) {
+                if (Math.abs(xPos) > 50 || Math.abs(zPos) > 50) {
                     continue;
                 }
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
@@ -82,7 +82,8 @@ public class DHUtil {
             }
         }
         if (!oneGoodPayload) {
-            LOGGER.warn("DHUtil returned an empty height map because no DHApi data point calls were successful!");
+            LOGGER.warn("DHUtil returned an empty height map because no DHApi data point calls were successful!" +
+                    " LOD = {}", lod);
         }
         if (!messages.isEmpty()) LOGGER.info("DHUtil messages: {}", messages);
         return new HeightMapData(heightMap, colorMap);
