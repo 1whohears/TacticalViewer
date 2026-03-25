@@ -56,9 +56,6 @@ public class DHUtil {
                 }
                 int xPos = (int) (minBound.x + x * lod);
                 int zPos = (int) (minBound.z + z * lod);
-                if (Math.abs(xPos) > 50 || Math.abs(zPos) > 50) {
-                    continue;
-                }
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 messages.add(point.message);
