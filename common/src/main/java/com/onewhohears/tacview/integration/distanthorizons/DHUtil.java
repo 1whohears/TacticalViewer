@@ -8,6 +8,7 @@ import com.seibel.distanthorizons.api.interfaces.data.IDhApiTerrainDataCache;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.objects.DhApiResult;
 import com.seibel.distanthorizons.api.objects.data.DhApiTerrainDataPoint;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -42,6 +43,8 @@ public class DHUtil {
         }
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
+        Vec3 playerPos = Minecraft.getInstance().player.position();
+
         boolean oneGoodPayload = false;
         Set<String> messages = new HashSet<>();
         int yPos = (int) maxBound.y;
@@ -53,6 +56,9 @@ public class DHUtil {
                 }
                 int xPos = (int) (minBound.x + x * lod);
                 int zPos = (int) (minBound.z + z * lod);
+                if (playerPos.distanceToSqr(xPos, playerPos.y, zPos) > 500 * 500) {
+                    continue;
+                }
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 messages.add(point.message);
@@ -77,7 +83,6 @@ public class DHUtil {
         }
         if (!oneGoodPayload) {
             LOGGER.warn("DHUtil returned an empty height map because no DHApi data point calls were successful!");
-            getTerrainCache().clear();
         }
         if (!messages.isEmpty()) LOGGER.info("DHUtil messages: {}", messages);
         return new HeightMapData(heightMap, colorMap);
