@@ -77,6 +77,7 @@ public class DHUtil {
         }
         if (!oneGoodPayload) {
             LOGGER.warn("DHUtil returned an empty height map because no DHApi data point calls were successful!");
+            getTerrainCache().clear();
         }
         if (!messages.isEmpty()) LOGGER.info("DHUtil messages: {}", messages);
         return new HeightMapData(heightMap, colorMap);
