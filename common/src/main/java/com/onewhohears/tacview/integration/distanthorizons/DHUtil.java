@@ -43,11 +43,9 @@ public class DHUtil {
         }
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
-        Vec3 playerPos = Minecraft.getInstance().player.position();
-
         boolean oneGoodPayload = false;
         Set<String> messages = new HashSet<>();
-        int yPos = (int) maxBound.y;
+        int yPos = Math.min((int) maxBound.y, 200);
         for (int x = 0; x < heightMap.length; ++x) {
             for (int z = 0; z < heightMap[x].length; ++z) {
                 if (System.currentTimeMillis() - startTime > HEIGHT_MAP_GEN_TIMEOUT) {

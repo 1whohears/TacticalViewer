@@ -12,6 +12,7 @@ public class TVClientEventHandlers {
     public static void init() {
         ClientTickEvent.CLIENT_POST.register(TVClientEventHandlers::onClientTick);
         ClientGuiEvent.RENDER_HUD.register(TVClientEventHandlers::onRenderHud);
+        // TODO client DH cache periodically and on new level loads
     }
 
     private static void onRenderHud(GuiGraphics gui, float partialTick) {
