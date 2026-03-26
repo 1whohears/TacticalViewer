@@ -1,9 +1,13 @@
 package com.onewhohears.tacview.common.core;
 
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.onewhohears.onewholibs.util.UtilMCText;
+import com.onewhohears.tacview.client.core.ClientPlayback;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.EntityGetter;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +19,14 @@ public class PlayerRecorder extends MoreRecorders.AbstractLivingRec<EntityKeyfra
 
     public PlayerRecorder(@NotNull JsonObject data, @NotNull RecordingSession session) {
         super(data, EntityGetter::getPlayerByUUID, session);
+    }
+
+    @Override
+    public void onPlaybackRender(@NotNull Player entity, @NotNull ClientPlayback playback,
+                                 PoseStack stack, float yaw, @NotNull Vec3 renderPos, float partialTick,
+                                 MultiBufferSource buffer, int packedLight) {
+        super.onPlaybackRender(entity, playback, stack, yaw, renderPos, partialTick, buffer, packedLight);
+        // TODO render triangle over player heads to make it easier to find them
     }
 
     @Override
