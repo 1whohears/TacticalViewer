@@ -130,8 +130,8 @@ public class ClientPlayback {
     }
 
     public Vec3 getFakeWorldPos(@NotNull Entity fake) {
-        Vec3 d = fake.position().subtract(center);
-        return parent.position().add(d.add(0,fake.getBbHeight()*0.5,0).scale(scale));
+        Vec3 d = fake.position().add(0,fake.getBbHeight()*0.5,0).subtract(center);
+        return parent.position().add(d.scale(scale));
     }
 
     /**
