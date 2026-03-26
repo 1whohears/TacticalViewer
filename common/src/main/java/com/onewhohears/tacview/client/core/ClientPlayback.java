@@ -5,7 +5,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
-import com.onewhohears.onewholibs.util.math.UtilAngles;
 import com.onewhohears.onewholibs.util.math.UtilGeometry;
 import com.onewhohears.tacview.Config;
 import com.onewhohears.tacview.TVDependencySafety;
@@ -47,13 +46,18 @@ public class ClientPlayback {
     private final List<Component> overlayEntityInfo = new ArrayList<>();
     private final Set<String> bannedEntityTypes = new HashSet<>();
 
+    public int calculatedHeights = 0;
+    private int meshedHeights = 0;
+
     private HeightMapData heightMap = null;
     private long heightMapUpdateTime = 0;
+    private long heightMapUpdateMeshTime = 0;
     private VertexBuffer heightmapBuffer;
-    private boolean heightmapDirty = true;
+    private boolean heightmapMeshDirty = true;
     private Vec3 center = Vec3.ZERO;
     private float scale = 1;
     private Entity lookAtFakeEntity = null;
+    private String prevSessionId = "";
 
     public ClientPlayback(@NotNull TacViewEntity parent) {
         this.parent = parent;
@@ -69,6 +73,8 @@ public class ClientPlayback {
             TVClientManager.get().requestRecordingSessionFromServer(sessionId);
             return;
         }
+        if (!prevSessionId.equals(sessionId)) heightMap = null;
+
         long tick  = parent.getPlaybackTick();
         float width = parent.getWidth();
         float height = parent.getHeight();
@@ -117,6 +123,8 @@ public class ClientPlayback {
         });
         List<RecordEvent> eventsAtTick = session.getRecordEventsAtTick(tick);
         eventsAtTick.forEach(event -> event.onEventPlayback(this));
+        TVDependencySafety.onClientPlaybackTick(this);
+        prevSessionId = sessionId;
     }
 
     public Vec3 getFakeWorldPos(@NotNull Entity fake) {
@@ -156,19 +164,16 @@ public class ClientPlayback {
         stack.scale(scale, scale, scale);
 
         if (TacViewMod.isDHLoaded) {
-            m.getProfiler().push("Tac View Replay Gen Height Map");
-
             int lod = (int) Math.ceil(Math.sqrt(size.x * size.z / Config.CLIENT.maxHeightMapTiles.get()));
             stack.translate(0, 0.01f / scale, 0);
 
             updateHeightMap(m.level, minBound, maxBound, lod);
 
-            if (heightmapDirty) {
+            if (heightmapMeshDirty) {
                 float minY = m.level.getMinBuildHeight(), maxY = m.level.getMaxBuildHeight();
                 rebuildHeightmapMesh(center, lod, minY, maxY);
             }
 
-            m.getProfiler().pop();
             m.getProfiler().push("Tac View Replay Render Terrain");
 
             if (heightmapBuffer != null) {
@@ -245,10 +250,24 @@ public class ClientPlayback {
     }
 
     private void updateHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
-        if (heightMap == null || System.currentTimeMillis() - heightMapUpdateTime >= HEIGHT_MAP_UPDATE_RATE) {
-            heightMap = TVDependencySafety.getDHHeightMap(level, minBound, maxBound, lod);
+        if (heightMap == null) {
+            heightMap = TVDependencySafety.getDHHeightMap(level, minBound, maxBound, lod, true);
+            calculatedHeights = 0;
+            meshedHeights = 0;
             heightMapUpdateTime = System.currentTimeMillis();
-            heightmapDirty = true;
+        }
+        long timeDiff = System.currentTimeMillis() - heightMapUpdateTime;
+        if (timeDiff >= Config.CLIENT.heightMapUpdateRate.get() * 1000) {
+            heightMap = TVDependencySafety.getDHHeightMap(level, minBound, maxBound, lod, false);
+            calculatedHeights = 0;
+            meshedHeights = 0;
+            heightMapUpdateTime = System.currentTimeMillis();
+        }
+        long meshTimeDiff = System.currentTimeMillis() - heightMapUpdateMeshTime;
+        if (heightMap != null && meshedHeights < calculatedHeights
+                && meshTimeDiff > Config.CLIENT.heightMapMeshUpdateRate.get() * 1000) {
+            heightmapMeshDirty = true;
+            heightMapUpdateMeshTime = System.currentTimeMillis();
         }
     }
 
@@ -361,6 +380,7 @@ public class ClientPlayback {
         heightmapBuffer.upload(buffer.end());
         VertexBuffer.unbind();
 
-        heightmapDirty = false;
+        heightmapMeshDirty = false;
+        meshedHeights = calculatedHeights;
     }
 }

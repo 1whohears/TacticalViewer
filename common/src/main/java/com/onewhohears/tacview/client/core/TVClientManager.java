@@ -25,6 +25,9 @@ import java.util.function.BiConsumer;
 public class TVClientManager {
 
     public static final long REQUEST_RETRY_TIME = 4000;
+
+    public int HM_TILE_GEN_TICK_COUNT = 0;
+
     private final Map<String, RequestedSessionData> requestedSessions = new HashMap<>();
 
     @Nullable
@@ -35,6 +38,7 @@ public class TVClientManager {
         findNearestViewer();
         handleInputs();
         handleOverlay();
+        HM_TILE_GEN_TICK_COUNT = 0;
     }
 
     protected void handleInputs() {

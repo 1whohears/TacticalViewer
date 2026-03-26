@@ -8,6 +8,9 @@ import java.util.List;
 public class Config {
     public static class Client {
         public final ForgeConfigSpec.IntValue maxHeightMapTiles;
+        public final ForgeConfigSpec.IntValue heightMapUpdateRate;
+        public final ForgeConfigSpec.IntValue heightMapMeshUpdateRate;
+        public final ForgeConfigSpec.IntValue heightMapMaxGenTilesPerTick;
         public final ForgeConfigSpec.ConfigValue<List<? extends String>> hideValues;
         public Client(ForgeConfigSpec.Builder builder) {
             hideValues = builder.defineList("hideValues",
@@ -18,6 +21,20 @@ public class Config {
                             " If too big, Distant Horizons may poop itself and not give any height map data." +
                             " If too small, the inaccuracies may cause entities to sometimes render under the height map.")
                     .defineInRange("maxHeightMapTiles", 16384, 1, Integer.MAX_VALUE);
+            heightMapUpdateRate = builder.comment("How often in seconds will the distant horizons heightmap" +
+                            " in a replay viewer completely refresh. It will completely refresh when you watch a" +
+                            " different replay. Reducing this value allows the heightmap to update based on" +
+                            " changes in your world sooner.")
+                    .defineInRange("heightMapUpdateRate", 300, 1, Integer.MAX_VALUE);
+            heightMapMaxGenTilesPerTick = builder.comment("The max num of tiles the height map will generate per tick." +
+                            " The heightmap generation load is spread over multiple client ticks." +
+                            " Increase this value if you want height maps to generate faster" +
+                            " and you think your PC can handle it." +
+                            " Decrease this value if generating height maps is causing bad lag spikes.")
+                    .defineInRange("heightMapMaxGenTilesPerTick", 64, 1, Integer.MAX_VALUE);
+            heightMapMeshUpdateRate = builder.comment("How often in seconds will the distant horizons heightmap" +
+                            " in a replay viewer visually refresh.")
+                    .defineInRange("heightMapMeshUpdateRate", 2, 1, Integer.MAX_VALUE);
         }
     }
 
