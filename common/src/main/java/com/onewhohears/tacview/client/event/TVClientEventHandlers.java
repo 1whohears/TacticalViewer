@@ -1,18 +1,26 @@
 package com.onewhohears.tacview.client.event;
 
+import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.client.core.TVClientManager;
 import com.onewhohears.tacview.client.overlay.PlaybackInfoOverlay;
 import dev.architectury.event.events.client.ClientGuiEvent;
+import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
+import org.jetbrains.annotations.Nullable;
 
 public class TVClientEventHandlers {
 
     public static void init() {
         ClientTickEvent.CLIENT_POST.register(TVClientEventHandlers::onClientTick);
         ClientGuiEvent.RENDER_HUD.register(TVClientEventHandlers::onRenderHud);
-        // TODO client DH cache periodically and on new level loads
+        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(TVClientEventHandlers::onPlayerQuit);
+    }
+
+    private static void onPlayerQuit(@Nullable LocalPlayer localPlayer) {
+        TVDependencySafety.clearDHCache();
     }
 
     private static void onRenderHud(GuiGraphics gui, float partialTick) {

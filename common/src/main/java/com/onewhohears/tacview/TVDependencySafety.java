@@ -21,4 +21,8 @@ public class TVDependencySafety {
         if (TacViewMod.isDHLoaded) DHUtil.onClientPlaybackTick(playback);
     }
 
+    public static void clearDHCache() {
+        if (TacViewMod.isDHLoaded) DHUtil.clearTerrainCache();
+    }
+
 }
