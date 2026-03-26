@@ -82,6 +82,8 @@ public class DHUtil {
 
                 TVClientManager.get().HM_TILE_GEN_TICK_COUNT++;
                 playback.calculatedHeights++;
+                TVClientManager.get().PREV_UPDATE_TIME = System.currentTimeMillis();
+                TVClientManager.get().CLEARED_DH_CACHE = false;
             }
             firstZ = 0;
         }
@@ -104,7 +106,6 @@ public class DHUtil {
 
     public static void clearTerrainCache() {
         getTerrainCache().clear();
-        // FIXME how do I clear this cache "every once and a while" without cooking performance for the replay viewers
     }
 
     public static int getColor(IDhApiBlockStateWrapper state, Level level, int x, int y, int z) {

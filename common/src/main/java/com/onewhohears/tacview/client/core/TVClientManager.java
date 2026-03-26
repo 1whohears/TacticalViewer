@@ -2,6 +2,7 @@ package com.onewhohears.tacview.client.core;
 
 import com.google.gson.JsonObject;
 import com.onewhohears.onewholibs.util.math.UtilAngles;
+import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.client.input.TVKeyBinds;
 import com.onewhohears.tacview.client.overlay.PlaybackInfoOverlay;
 import com.onewhohears.tacview.common.command.TacViewCommands;
@@ -27,6 +28,8 @@ public class TVClientManager {
     public static final long REQUEST_RETRY_TIME = 4000;
 
     public int HM_TILE_GEN_TICK_COUNT = 0;
+    public long PREV_UPDATE_TIME = 0;
+    public boolean CLEARED_DH_CACHE = false;
 
     private final Map<String, RequestedSessionData> requestedSessions = new HashMap<>();
 
@@ -39,6 +42,10 @@ public class TVClientManager {
         handleInputs();
         handleOverlay();
         HM_TILE_GEN_TICK_COUNT = 0;
+        if (!CLEARED_DH_CACHE && System.currentTimeMillis() - PREV_UPDATE_TIME > 120000) {
+            TVDependencySafety.clearDHCache();
+            CLEARED_DH_CACHE = true;
+        }
     }
 
     protected void handleInputs() {
