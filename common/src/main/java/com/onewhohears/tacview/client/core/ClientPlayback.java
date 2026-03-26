@@ -123,7 +123,9 @@ public class ClientPlayback {
         });
         List<RecordEvent> eventsAtTick = session.getRecordEventsAtTick(tick);
         eventsAtTick.forEach(event -> event.onEventPlayback(this));
-        TVDependencySafety.onClientPlaybackTick(this);
+
+        int lod = (int) Math.ceil(Math.sqrt(size.x * size.z / Config.CLIENT.maxHeightMapTiles.get()));
+        TVDependencySafety.onClientPlaybackTick(this, m.level, minBound, maxBound, lod);
         prevSessionId = sessionId;
     }
 
@@ -167,7 +169,7 @@ public class ClientPlayback {
             int lod = (int) Math.ceil(Math.sqrt(size.x * size.z / Config.CLIENT.maxHeightMapTiles.get()));
             stack.translate(0, 0.01f / scale, 0);
 
-            updateHeightMap(m.level, minBound, maxBound, lod);
+            updateHeightMap(minBound, maxBound, lod);
 
             if (heightmapMeshDirty) {
                 float minY = m.level.getMinBuildHeight(), maxY = m.level.getMaxBuildHeight();
@@ -249,16 +251,15 @@ public class ClientPlayback {
         return closestFake;
     }
 
-    private void updateHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod) {
+    private void updateHeightMap(Vec3 minBound, Vec3 maxBound, int lod) {
         if (heightMap == null) {
-            heightMap = TVDependencySafety.getDHHeightMap(level, minBound, maxBound, lod, true);
+            heightMap = createNewHeightMap(minBound, maxBound, lod);
             calculatedHeights = 0;
             meshedHeights = 0;
             heightMapUpdateTime = System.currentTimeMillis();
         }
         long timeDiff = System.currentTimeMillis() - heightMapUpdateTime;
         if (timeDiff >= Config.CLIENT.heightMapUpdateRate.get() * 1000) {
-            heightMap = TVDependencySafety.getDHHeightMap(level, minBound, maxBound, lod, false);
             calculatedHeights = 0;
             meshedHeights = 0;
             heightMapUpdateTime = System.currentTimeMillis();
@@ -269,6 +270,15 @@ public class ClientPlayback {
             heightmapMeshDirty = true;
             heightMapUpdateMeshTime = System.currentTimeMillis();
         }
+    }
+
+    private HeightMapData createNewHeightMap(Vec3 minBound, Vec3 maxBound, int lod) {
+        Vec3 size = maxBound.subtract(minBound);
+        int xLength = (int)Math.ceil(size.x / lod);
+        int zLength = (int)Math.ceil(size.z / lod);
+        int[][] heightMap = new int[xLength][zLength];
+        int[][] colorMap = new int[xLength][zLength];
+        return new HeightMapData(heightMap, colorMap);
     }
 
     @Nullable
@@ -382,5 +392,10 @@ public class ClientPlayback {
 
         heightmapMeshDirty = false;
         meshedHeights = calculatedHeights;
+    }
+
+    @Nullable
+    public HeightMapData getHeightMap() {
+        return heightMap;
     }
 }

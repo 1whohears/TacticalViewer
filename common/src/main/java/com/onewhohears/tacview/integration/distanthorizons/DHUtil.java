@@ -18,42 +18,37 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 public class DHUtil {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    @Nullable
-    private static HeightMapData HEIGHT_MAP = null;
-    private static ClientLevel LEVEL = null;
-    private static Vec3 MIN_BOUND = null, MAX_BOUND = null;
-    private static int LOD;
-
-    public static void onClientPlaybackTick(@NotNull ClientPlayback playback) {
-        if (HEIGHT_MAP == null) return;
+    public static void onClientPlaybackTick(@NotNull ClientPlayback playback, ClientLevel level,
+                                            Vec3 minBound, Vec3 maxBound, int lod) {
+        HeightMapData heightMap = playback.getHeightMap();
+        if (heightMap == null) return;
         long startTime = System.currentTimeMillis();
 
-        int totalTiles = HEIGHT_MAP.heights().length * HEIGHT_MAP.heights()[0].length;
+        int totalTiles = heightMap.heights().length * heightMap.heights()[0].length;
         if (playback.calculatedHeights >= totalTiles) return;
 
         Iterable<IDhApiLevelWrapper> levelWrappers = DhApi.Delayed.worldProxy.getAllLoadedLevelsWithDimensionNameLike(
-                LEVEL.dimension().location().getPath());
+                level.dimension().location().getPath());
         if (!levelWrappers.iterator().hasNext()) {
             LOGGER.warn("DHUtil returned an empty height map because no level wrapper was found!");
             return;
         }
         IDhApiLevelWrapper levelWrapper = levelWrappers.iterator().next();
 
-        int cols = HEIGHT_MAP.heights()[0].length;
+        int cols = heightMap.heights()[0].length;
         int firstX = playback.calculatedHeights / cols;
         int firstZ = playback.calculatedHeights % cols;
         boolean oneGoodPayload = false;
-        int yPos = Math.min((int) MAX_BOUND.y, 200);
+        int yPos = Math.min((int) maxBound.y, 200);
 
-        for (int x = firstX; x < HEIGHT_MAP.heights().length; ++x) {
-            for (int z = firstZ; z < HEIGHT_MAP.heights()[x].length; ++z) {
+        for (int x = firstX; x < heightMap.heights().length; ++x) {
+            for (int z = firstZ; z < heightMap.heights()[x].length; ++z) {
                 if (TVClientManager.get().HM_TILE_GEN_TICK_COUNT >= Config.CLIENT.heightMapMaxGenTilesPerTick.get()) {
                     return;
                 }
@@ -63,8 +58,8 @@ public class DHUtil {
                             " Go to config and reduce heightMapMaxGenTilesPerTick", timeDiff);
                     return;
                 }
-                int xPos = (int) (MIN_BOUND.x + x * LOD);
-                int zPos = (int) (MIN_BOUND.z + z * LOD);
+                int xPos = (int) (minBound.x + x * lod);
+                int zPos = (int) (minBound.z + z * lod);
                 DhApiResult<DhApiTerrainDataPoint> point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, yPos, zPos, getTerrainCache());
                 if (!point.success || point.payload == null) continue;
@@ -78,12 +73,12 @@ public class DHUtil {
                 } else {
                     h = point.payload.topYBlockPos;
                 }
-                HEIGHT_MAP.heights()[x][z] = h;
+                heightMap.heights()[x][z] = h;
                 h -= 1;
                 point = DhApi.Delayed.terrainRepo.getSingleDataPointAtBlockPos(
                         levelWrapper, xPos, h, zPos, getTerrainCache());
-                int color = getColor(point.payload.blockStateWrapper, LEVEL, xPos, h, yPos);
-                HEIGHT_MAP.colors()[x][z] = color;
+                int color = getColor(point.payload.blockStateWrapper, level, xPos, h, yPos);
+                heightMap.colors()[x][z] = color;
 
                 TVClientManager.get().HM_TILE_GEN_TICK_COUNT++;
                 playback.calculatedHeights++;
@@ -91,33 +86,11 @@ public class DHUtil {
             firstZ = 0;
         }
 
-        if (playback.calculatedHeights >= totalTiles) {
-            clearTerrainCache();
-        }
-
         if (!oneGoodPayload) {
             LOGGER.warn("DHUtil playback tick returned an empty height map because" +
                     " no DHApi data point calls were successful!" +
-                    " LOD = {}", LOD);
+                    " LOD = {}", lod);
         }
-    }
-
-    public static HeightMapData getHeightMap(ClientLevel level, Vec3 minBound, Vec3 maxBound, int lod, boolean refresh) {
-        LEVEL = level;
-        MIN_BOUND = minBound;
-        MAX_BOUND = maxBound;
-        LOD = lod;
-
-        if (refresh || HEIGHT_MAP == null) {
-            Vec3 size = maxBound.subtract(minBound);
-            int xLength = (int)Math.ceil(size.x / lod);
-            int zLength = (int)Math.ceil(size.z / lod);
-            int[][] heightMap = new int[xLength][zLength];
-            int[][] colorMap = new int[xLength][zLength];
-            HEIGHT_MAP = new HeightMapData(heightMap, colorMap);
-        }
-
-        return HEIGHT_MAP;
     }
 
     private static IDhApiTerrainDataCache TERRAIN_CACHE = null;
@@ -131,6 +104,7 @@ public class DHUtil {
 
     public static void clearTerrainCache() {
         getTerrainCache().clear();
+        // FIXME how do I clear this cache "every once and a while" without cooking performance for the replay viewers
     }
 
     public static int getColor(IDhApiBlockStateWrapper state, Level level, int x, int y, int z) {
