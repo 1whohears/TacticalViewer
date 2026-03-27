@@ -105,7 +105,7 @@ public class DHUtil {
     }
 
     public static void clearTerrainCache() {
-        getTerrainCache().clear();
+        //getTerrainCache().clear(); // FIXME clearing the cache is causing a crash
     }
 
     public static int getColor(IDhApiBlockStateWrapper state, Level level, int x, int y, int z) {
