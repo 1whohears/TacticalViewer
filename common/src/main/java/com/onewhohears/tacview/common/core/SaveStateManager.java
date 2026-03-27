@@ -1,5 +1,6 @@
 package com.onewhohears.tacview.common.core;
 
+import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.tacview.util.UtilFile;
 import net.minecraft.nbt.CompoundTag;
@@ -8,15 +9,21 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class SaveStateManager {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     public static String SAVE_STATE_PATH = "tac_view/save_states/";
+
+    private final Set<UUID> killDuplicates = new HashSet<>();
 
     public boolean loadSaveState(@NotNull String id, @NotNull ServerLevel level,
                                  @NotNull Consumer<String> debug) {
@@ -46,6 +53,7 @@ public class SaveStateManager {
                 if (entityOld == null) {
                     if (!UtilEntity.isPlayer(entityNew)) {
                         level.addFreshEntity(entityNew);
+                        killDuplicates.add(entityNew.getUUID());
                         // TODO delete entities that have the old uuid
                     }
                 } else {
@@ -57,11 +65,12 @@ public class SaveStateManager {
                 return entityNew;
             });
         }
+        debug.accept("Loaded Save State "+id);
         return true;
     }
 
     public boolean createSaveState(@NotNull String id, @NotNull ServerLevel level,
-                                   @NotNull List<Entity> entities,
+                                   @NotNull Collection<? extends Entity> entities,
                                    @NotNull Consumer<String> debug) {
         if (UtilFile.doesFileExistGamePath(getSaveStateFileName(id))) {
             debug.accept("Could not create a new save state because the id "+id+" already exists!");
@@ -70,10 +79,11 @@ public class SaveStateManager {
         CompoundTag nbt = serializeEntities(entities);
         nbt.putString("dimension", level.dimension().location().toString());
         UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
+        debug.accept("Saved new save state with id "+id);
         return true;
     }
 
-    private static @NotNull CompoundTag serializeEntities(@NotNull List<Entity> entities) {
+    private static @NotNull CompoundTag serializeEntities(@NotNull Collection<? extends Entity> entities) {
         CompoundTag nbt = new CompoundTag();
         ListTag entityList = new ListTag();
         Set<Integer> savedEntities = new HashSet<>();

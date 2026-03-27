@@ -29,25 +29,32 @@ public class TacViewCommands {
     public TacViewCommands(CommandDispatcher<CommandSourceStack> d) {
         // TODO create savestate save/load command
         d.register(Commands.literal("savestate").requires((stack) -> stack.hasPermission(2))
-                .then(Commands.literal("save")
-                        .then(Commands.argument("id", StringArgumentType.word())
-                                .then(Commands.argument("entities", EntityArgument.entities())
-                                        .executes(ctx -> {
-
-                                            return 1;
-                                        })
-                                )
-                        )
-                )
-                .then(Commands.literal("load")
-                        .then(Commands.argument("id", StringArgumentType.word())
-                                .suggests(suggestSaveStateIds())
+                .then(Commands.literal("save").then(Commands.argument("id", StringArgumentType.word())
+                        .then(Commands.argument("entities", EntityArgument.entities())
                                 .executes(ctx -> {
-
-                                    return 1;
+                                    String id = StringArgumentType.getString(ctx, "id");
+                                    Collection<? extends Entity> entities = EntityArgument.getEntities(ctx, "entities");
+                                    AtomicReference<String> msg = new AtomicReference<>();
+                                    boolean result = SaveStateManager.get().createSaveState(id,
+                                            ctx.getSource().getLevel(), entities, msg::set);
+                                    if (result) ctx.getSource().sendSuccess(() -> UtilMCText.literal(msg.get()), true);
+                                    else ctx.getSource().sendFailure(UtilMCText.literal(msg.get()));
+                                    return result ? 1 : 0;
                                 })
                         )
-                )
+                ))
+                .then(Commands.literal("load").then(Commands.argument("id", StringArgumentType.word())
+                        .suggests(suggestSaveStateIds())
+                        .executes(ctx -> {
+                            String id = StringArgumentType.getString(ctx, "id");
+                            AtomicReference<String> msg = new AtomicReference<>();
+                            boolean result = SaveStateManager.get().loadSaveState(id,
+                                    ctx.getSource().getLevel(), msg::set);
+                            if (result) ctx.getSource().sendSuccess(() -> UtilMCText.literal(msg.get()), true);
+                            else ctx.getSource().sendFailure(UtilMCText.literal(msg.get()));
+                            return result ? 1 : 0;
+                        })
+                ))
         );
         d.register(Commands.literal("tacview").requires((stack) -> stack.hasPermission(2))
                 .then(Commands.literal("start")
