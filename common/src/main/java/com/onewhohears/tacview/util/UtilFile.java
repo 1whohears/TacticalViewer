@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import dev.architectury.platform.Platform;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -16,6 +18,29 @@ import java.util.stream.Stream;
 public class UtilFile {
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    public static CompoundTag readNbtInGamePath(String path) {
+        Path gamePath = Platform.getGameFolder();
+        Path resolved = gamePath.resolve(path);
+        CompoundTag nbt;
+        try {
+            nbt = NbtIo.readCompressed(resolved.toFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new CompoundTag();
+        }
+        return nbt;
+    }
+
+    public static void writeNbtInGamePath(String path, CompoundTag nbt) {
+        Path gamePath = Platform.getGameFolder();
+        Path resolved = gamePath.resolve(path);
+        try {
+            NbtIo.writeCompressed(nbt, resolved.toFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void printGamePath(String path, JsonObject json) {
         Path gamePath = Platform.getGameFolder();
@@ -68,6 +93,16 @@ public class UtilFile {
     }
 
     public static Set<String> getJsonFileNamesInAbsolutePath(String path) {
+        return getFileNamesEndingWithInAbsolutePath(path, ".json");
+    }
+
+    public static Set<String> getFileNamesEndingWithInGamePath(String path, String suffix) {
+        Path gamePath = Platform.getGameFolder();
+        Path resolved = gamePath.resolve(path);
+        return getFileNamesEndingWithInAbsolutePath(resolved.toString(), suffix);
+    }
+
+    public static Set<String> getFileNamesEndingWithInAbsolutePath(String path, String suffix) {
         Path dir = Paths.get(path);
         if (!dir.isAbsolute() || !Files.isDirectory(dir)) {
             return Set.of();
@@ -77,7 +112,7 @@ public class UtilFile {
                     .filter(Files::isRegularFile)
                     .map(Path::getFileName)
                     .map(Path::toString)
-                    .filter(name -> name.toLowerCase().endsWith(".json"))
+                    .filter(name -> name.toLowerCase().endsWith(suffix))
                     .map(name -> name.substring(0, name.length() - 5))
                     .collect(Collectors.toSet());
         } catch (IOException e) {
