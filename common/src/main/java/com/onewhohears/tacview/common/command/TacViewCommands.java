@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.onewhohears.onewholibs.util.UtilMCText;
 import com.onewhohears.tacview.common.core.RecordingSession;
+import com.onewhohears.tacview.common.core.SaveStateManager;
 import com.onewhohears.tacview.common.core.SessionManager;
 import com.onewhohears.tacview.common.entity.TacViewEntity;
 import net.minecraft.commands.CommandSourceStack;
@@ -27,6 +28,27 @@ public class TacViewCommands {
 
     public TacViewCommands(CommandDispatcher<CommandSourceStack> d) {
         // TODO create savestate save/load command
+        d.register(Commands.literal("savestate").requires((stack) -> stack.hasPermission(2))
+                .then(Commands.literal("save")
+                        .then(Commands.argument("id", StringArgumentType.word())
+                                .then(Commands.argument("entities", EntityArgument.entities())
+                                        .executes(ctx -> {
+
+                                            return 1;
+                                        })
+                                )
+                        )
+                )
+                .then(Commands.literal("load")
+                        .then(Commands.argument("id", StringArgumentType.word())
+                                .suggests(suggestSaveStateIds())
+                                .executes(ctx -> {
+
+                                    return 1;
+                                })
+                        )
+                )
+        );
         d.register(Commands.literal("tacview").requires((stack) -> stack.hasPermission(2))
                 .then(Commands.literal("start")
                         .then(Commands.argument("session_id", StringArgumentType.word())
@@ -189,6 +211,13 @@ public class TacViewCommands {
                         )
                 )
         );
+    }
+
+    private SuggestionProvider<CommandSourceStack> suggestSaveStateIds() {
+        return (context, builder) -> {
+            SaveStateManager.get().getSaveStateIds().forEach(builder::suggest);
+            return builder.buildFuture();
+        };
     }
 
     private SuggestionProvider<CommandSourceStack> suggestLoadedSessionId() {
