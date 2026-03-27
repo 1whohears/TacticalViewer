@@ -35,8 +35,11 @@ public class UtilFile {
     public static void writeNbtInGamePath(String path, CompoundTag nbt) {
         Path gamePath = Platform.getGameFolder();
         Path resolved = gamePath.resolve(path);
+        File file = resolved.toFile();
+        Path p = Path.of(path).getParent().normalize();
+        p.toFile().mkdirs();
         try {
-            NbtIo.writeCompressed(nbt, resolved.toFile());
+            NbtIo.writeCompressed(nbt, file);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -107,13 +110,14 @@ public class UtilFile {
         if (!dir.isAbsolute() || !Files.isDirectory(dir)) {
             return Set.of();
         }
+        int suffixLength = suffix.length();
         try (Stream<Path> stream = Files.list(dir)) {
             return stream
                     .filter(Files::isRegularFile)
                     .map(Path::getFileName)
                     .map(Path::toString)
                     .filter(name -> name.toLowerCase().endsWith(suffix))
-                    .map(name -> name.substring(0, name.length() - 5))
+                    .map(name -> name.substring(0, name.length() - suffixLength))
                     .collect(Collectors.toSet());
         } catch (IOException e) {
             e.printStackTrace();
