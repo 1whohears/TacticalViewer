@@ -71,13 +71,15 @@ public class SaveStateManager {
                         entityNew = entityOld;
                     }
                     teleportToTagPos(entityNew, entityTag, level);
-                    if (vehicleToPlayerMap.containsKey(newUUID)) {
-                        Entity player = vehicleToPlayerMap.get(newUUID);
-                        player.startRiding(entityNew);
-                    }
                     return entityNew;
                 });
             }
+            // TODO send a packet to player client telling it to confirm that it finished teleporting
+            //  and it is time to start riding. Also tell the vehicle on the client side to instantly move
+            /*if (vehicleToPlayerMap.containsKey(newUUID)) {
+                Entity player = vehicleToPlayerMap.get(newUUID);
+                player.startRiding(entityNew);
+            }*/
         } catch (Exception e) {
             debug.accept("Failed to load Save State "+id+" because "+e.getMessage());
             e.printStackTrace();
