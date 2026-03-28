@@ -221,6 +221,8 @@ public class ClientPlayback {
                     recorder.onPlaybackRender(fake, this, stack, f, d, partialTick, buffer, packedLight);
 
                     // TODO fix entities rendering under the height map
+                    // TODO sometimes entities don't render name tags.
+                    //  is it because viewing player is too far from the entities location at record time?
 
                     m.getEntityRenderDispatcher().render(fake, d.x, d.y, d.z, f, partialTick, stack, buffer, packedLight);
                 }
