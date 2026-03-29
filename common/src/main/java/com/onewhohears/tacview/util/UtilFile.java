@@ -20,7 +20,7 @@ public class UtilFile {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static CompoundTag readNbtInGamePath(String path) {
-        Path gamePath = getWorldFolder();
+        Path gamePath = getGameFolder();
         Path resolved = gamePath.resolve(path);
         CompoundTag nbt;
         try {
@@ -33,7 +33,7 @@ public class UtilFile {
     }
 
     public static void writeNbtInGamePath(String path, CompoundTag nbt) {
-        Path gamePath = getWorldFolder();
+        Path gamePath = getGameFolder();
         Path resolved = gamePath.resolve(path);
         File file = resolved.toFile();
         Path p = Path.of(path).getParent().normalize();
@@ -46,7 +46,7 @@ public class UtilFile {
     }
 
     public static void printGamePath(String path, JsonObject json) {
-        Path gamePath = getWorldFolder();
+        Path gamePath = getGameFolder();
         Path resolved = gamePath.resolve(path);
         printJsonAbsolutePath(resolved.toString(), json);
     }
@@ -65,7 +65,7 @@ public class UtilFile {
     }
 
     public static JsonObject readJsonGamePath(String path) {
-        Path gamePath = getWorldFolder();
+        Path gamePath = getGameFolder();
         Path resolved = gamePath.resolve(path);
         return readJsonAbsolutePath(resolved.toString());
     }
@@ -80,7 +80,7 @@ public class UtilFile {
     }
 
     public static boolean doesFileExistGamePath(String path) {
-        Path gamePath = getWorldFolder();
+        Path gamePath = getGameFolder();
         Path resolved = gamePath.resolve(path);
         return doesFileExistAbsolutePath(resolved.toString());
     }
@@ -90,7 +90,7 @@ public class UtilFile {
     }
 
     public static Set<String> getJsonFileNamesInGamePath(String path) {
-        Path gamePath = getWorldFolder();
+        Path gamePath = getGameFolder();
         Path resolved = gamePath.resolve(path);
         return getJsonFileNamesInAbsolutePath(resolved.toString());
     }
@@ -100,7 +100,7 @@ public class UtilFile {
     }
 
     public static Set<String> getFileNamesEndingWithInGamePath(String path, String suffix) {
-        Path gamePath = getWorldFolder();
+        Path gamePath = getGameFolder();
         Path resolved = gamePath.resolve(path);
         return getFileNamesEndingWithInAbsolutePath(resolved.toString(), suffix);
     }
@@ -125,8 +125,7 @@ public class UtilFile {
         }
     }
 
-    public static Path getWorldFolder() {
-        // TODO everything should be saved in the world folder since all of these are world specific
+    public static Path getGameFolder() {
         return Platform.getGameFolder();
     }
 
