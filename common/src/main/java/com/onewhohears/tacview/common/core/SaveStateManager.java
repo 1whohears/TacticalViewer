@@ -91,11 +91,10 @@ public class SaveStateManager {
                 entity.setUUID(newUUID);
                 entityTag.putUUID("UUID", newUUID);
                 level.addFreshEntity(entity);
-                //LOGGER.info("RECREATING ENTITY {}", entity);
             } else {
                 entity = entityOld;
                 entity.load(entityTag);
-                //LOGGER.info("RESETTING ENTITY {}", entity);
+                entity.stopRiding();
             }
 
             if (entityTag.contains("Passengers", 9)) {
@@ -116,7 +115,6 @@ public class SaveStateManager {
                 data.vehicleGoalPos = entity.position();
                 data.playerTag.putUUID("vehicle", newUUID);
                 data.player.startRiding(entity);
-                //LOGGER.info("PLAYER RIDING {}", data.player);
             }
 
             return entity;
