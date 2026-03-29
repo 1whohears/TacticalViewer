@@ -2,3 +2,7 @@ accessWidener   v2  named
 
 accessible field net/minecraft/client/Camera yRot F
 accessible field net/minecraft/client/Camera xRot F
+
+accessible method net/minecraft/world/entity/Entity unsetRemoved ()V
+
+accessible method net/minecraft/world/entity/EntityType loadStaticEntity (Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/world/level/Level;)Ljava/util/Optional;

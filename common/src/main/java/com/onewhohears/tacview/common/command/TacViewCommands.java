@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class TacViewCommands {
 
     public TacViewCommands(CommandDispatcher<CommandSourceStack> d) {
-        // TODO create savestate save/load command
         d.register(Commands.literal("savestate").requires((stack) -> stack.hasPermission(2))
                 .then(Commands.literal("save").then(Commands.argument("id", StringArgumentType.word())
                         .then(Commands.argument("entities", EntityArgument.entities())

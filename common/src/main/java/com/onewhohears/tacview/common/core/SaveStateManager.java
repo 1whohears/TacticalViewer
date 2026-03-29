@@ -8,7 +8,9 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -42,7 +44,7 @@ public class SaveStateManager {
             return false;
         }
         try {
-            Map<UUID, Entity> vehicleToPlayerMap = new HashMap<>();
+            Map<UUID, VehicleSyncData> vehicleToPlayerMap = new HashMap<>();
             ListTag playerList = nbt.getList("players", 10);
             for (int i = 0; i < playerList.size(); ++i) {
                 CompoundTag playerTag = playerList.getCompound(i);
@@ -50,36 +52,24 @@ public class SaveStateManager {
                 Entity player = level.getEntity(playerUUID);
                 if (player == null) continue;
                 player.load(playerTag);
-                teleportToTagPos(player, playerTag, level);
+                Vec3 pos = teleportToTagPos(player, playerTag, level);
                 if (playerTag.contains("vehicle")) {
                     UUID vehicleUUID = playerTag.getUUID("vehicle");
-                    vehicleToPlayerMap.put(vehicleUUID, player);
+                    VehicleSyncData data = new VehicleSyncData();
+                    data.player = player;
+                    data.playerGoalPos = pos;
+                    data.playerTag = playerTag;
+                    vehicleToPlayerMap.put(vehicleUUID, data);
+                } else {
+                    player.stopRiding();
                 }
             }
             ListTag entityList = nbt.getList("entities", 10);
             for (int i = 0; i < entityList.size(); ++i) {
                 CompoundTag entityTag = entityList.getCompound(i);
-                EntityType.loadEntityRecursive(entityTag, level, entityNew -> {
-                    UUID newUUID = entityNew.getUUID();
-                    Entity entityOld = level.getEntity(newUUID);
-                    if (entityOld == null) {
-                        level.addFreshEntity(entityNew);
-                        killDuplicates.add(newUUID);
-                        // TODO delete entities that have the old uuid
-                    } else {
-                        entityOld.load(entityTag);
-                        entityNew = entityOld;
-                    }
-                    teleportToTagPos(entityNew, entityTag, level);
-                    return entityNew;
-                });
+                loadEntityRecursive(entityTag, level, vehicleToPlayerMap);
             }
-            // TODO send a packet to player client telling it to confirm that it finished teleporting
-            //  and it is time to start riding. Also tell the vehicle on the client side to instantly move
-            /*if (vehicleToPlayerMap.containsKey(newUUID)) {
-                Entity player = vehicleToPlayerMap.get(newUUID);
-                player.startRiding(entityNew);
-            }*/
+            UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
         } catch (Exception e) {
             debug.accept("Failed to load Save State "+id+" because "+e.getMessage());
             e.printStackTrace();
@@ -89,12 +79,67 @@ public class SaveStateManager {
         return true;
     }
 
-    private static void teleportToTagPos(@NotNull Entity entity, @NotNull CompoundTag entityTag,
+    @Nullable
+    public static Entity loadEntityRecursive(CompoundTag entityTag, ServerLevel level,
+                                             Map<UUID, VehicleSyncData> vehicleToPlayerMap) {
+        return EntityType.loadStaticEntity(entityTag, level).map(entity -> {
+            UUID oldUUID = entity.getUUID();
+            UUID newUUID = oldUUID;
+            Entity entityOld = level.getEntity(oldUUID);
+            if (entityOld == null || entityOld.isRemoved()) {
+                newUUID = UUID.randomUUID();
+                entity.setUUID(newUUID);
+                entityTag.putUUID("UUID", newUUID);
+                level.addFreshEntity(entity);
+                //LOGGER.info("RECREATING ENTITY {}", entity);
+            } else {
+                entity = entityOld;
+                entity.load(entityTag);
+                //LOGGER.info("RESETTING ENTITY {}", entity);
+            }
+
+            if (entityTag.contains("Passengers", 9)) {
+                ListTag listTag = entityTag.getList("Passengers", 10);
+                for(int i = 0; i < listTag.size(); ++i) {
+                    Entity entity2 = loadEntityRecursive(listTag.getCompound(i), level, vehicleToPlayerMap);
+                    if (entity2 != null) {
+                        entity2.startRiding(entity, true);
+                    }
+                }
+            }
+
+            // TODO send a packet to player client telling it to confirm that it finished teleporting
+            //  and it is time to start riding. Also tell the vehicle on the client side to instantly move
+            if (vehicleToPlayerMap.containsKey(oldUUID)) {
+                VehicleSyncData data = vehicleToPlayerMap.get(oldUUID);
+                data.vehicle = entity;
+                data.vehicleGoalPos = entity.position();
+                data.playerTag.putUUID("vehicle", newUUID);
+                data.player.startRiding(entity);
+                //LOGGER.info("PLAYER RIDING {}", data.player);
+            }
+
+            return entity;
+        }).orElse(null);
+    }
+
+    public static class VehicleSyncData {
+        private VehicleSyncData() {};
+        public Entity player;
+        public Vec3 playerGoalPos;
+        public CompoundTag playerTag;
+        public Entity vehicle;
+        public Vec3 vehicleGoalPos;
+    }
+
+    private static Vec3 teleportToTagPos(@NotNull Entity entity, @NotNull CompoundTag entityTag,
                                          @NotNull ServerLevel level) {
         ListTag pos = entityTag.getList("Pos", 6);
         ListTag rot = entityTag.getList("Rotation", 5);
-        entity.teleportTo(level, pos.getDouble(0), pos.getDouble(1), pos.getDouble(2),
-                new HashSet<>(), rot.getFloat(0), rot.getFloat(1));
+        Vec3 p = new Vec3(pos.getDouble(0), pos.getDouble(1), pos.getDouble(2));
+        entity.teleportTo(level, p.x, p.y, p.z, new HashSet<>(),
+                rot.getFloat(0), rot.getFloat(1));
+        return p;
     }
 
     public boolean createSaveState(@NotNull String id, @NotNull ServerLevel level,
