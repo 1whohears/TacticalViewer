@@ -52,18 +52,23 @@ public class SaveStateManager {
                 Entity player = level.getEntity(playerUUID);
                 if (player == null) continue;
                 player.load(playerTag);
+                player.stopRiding();
                 Vec3 pos = teleportToTagPos(player, playerTag, level);
                 if (playerTag.contains("vehicle")) {
                     UUID vehicleUUID = playerTag.getUUID("vehicle");
+                    /*if (player.getVehicle() != null && player.getVehicle().getUUID().equals(vehicleUUID)) {
+
+                    }*/
                     VehicleSyncData data = new VehicleSyncData();
-                    data.player = player;
+                    data.playerId = player.getId();
+                    data.playerUUID = player.getUUID();
                     data.playerGoalPos = pos;
                     data.playerTag = playerTag;
                     vehicleToPlayerMap.put(vehicleUUID, data);
                     // TODO check if the player is riding this vehicle. if yes then teleport
-                } else {
+                } /*else {
                     player.stopRiding();
-                }
+                }*/
             }
             ListTag entityList = nbt.getList("entities", 10);
             for (int i = 0; i < entityList.size(); ++i) {
@@ -112,10 +117,11 @@ public class SaveStateManager {
             //  and it is time to start riding. Also tell the vehicle on the client side to instantly move
             if (vehicleToPlayerMap.containsKey(oldUUID)) {
                 VehicleSyncData data = vehicleToPlayerMap.get(oldUUID);
-                data.vehicle = entity;
+                data.vehicleId = entity.getId();
+                data.vehicleUUID = entity.getUUID();
                 data.vehicleGoalPos = entity.position();
                 data.playerTag.putUUID("vehicle", newUUID);
-                data.player.startRiding(entity);
+                //data.player.startRiding(entity);
             }
 
             return entity;
@@ -124,11 +130,15 @@ public class SaveStateManager {
 
     public static class VehicleSyncData {
         private VehicleSyncData() {};
-        public Entity player;
+        public int playerId;
+        public UUID playerUUID;
         public Vec3 playerGoalPos;
         public CompoundTag playerTag;
-        public Entity vehicle;
+        public boolean playerMoved = false;
+        public int vehicleId;
+        public UUID vehicleUUID;
         public Vec3 vehicleGoalPos;
+        public boolean vehicleMoved = false;
     }
 
     private static Vec3 teleportToTagPos(@NotNull Entity entity, @NotNull CompoundTag entityTag,
