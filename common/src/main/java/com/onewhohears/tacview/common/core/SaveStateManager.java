@@ -60,6 +60,7 @@ public class SaveStateManager {
                     data.playerGoalPos = pos;
                     data.playerTag = playerTag;
                     vehicleToPlayerMap.put(vehicleUUID, data);
+                    // TODO check if the player is riding this vehicle. if yes then teleport
                 } else {
                     player.stopRiding();
                 }
