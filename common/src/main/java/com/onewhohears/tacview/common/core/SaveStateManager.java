@@ -2,10 +2,15 @@ package com.onewhohears.tacview.common.core;
 
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.tacview.common.network.toclient.ToClientSyncVehiclePos;
 import com.onewhohears.tacview.util.UtilFile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
@@ -56,19 +61,12 @@ public class SaveStateManager {
                 Vec3 pos = teleportToTagPos(player, playerTag, level);
                 if (playerTag.contains("vehicle")) {
                     UUID vehicleUUID = playerTag.getUUID("vehicle");
-                    /*if (player.getVehicle() != null && player.getVehicle().getUUID().equals(vehicleUUID)) {
-
-                    }*/
                     VehicleSyncData data = new VehicleSyncData();
                     data.playerId = player.getId();
-                    data.playerUUID = player.getUUID();
                     data.playerGoalPos = pos;
                     data.playerTag = playerTag;
                     vehicleToPlayerMap.put(vehicleUUID, data);
-                    // TODO check if the player is riding this vehicle. if yes then teleport
-                } /*else {
-                    player.stopRiding();
-                }*/
+                }
             }
             ListTag entityList = nbt.getList("entities", 10);
             for (int i = 0; i < entityList.size(); ++i) {
@@ -113,32 +111,61 @@ public class SaveStateManager {
                 }
             }
 
-            // TODO send a packet to player client telling it to confirm that it finished teleporting
-            //  and it is time to start riding. Also tell the vehicle on the client side to instantly move
+            Vec3 pos = teleportToTagPos(entity, entityTag, level);
+            ChunkMap chunkMap = level.getChunkSource().chunkMap;
+            chunkMap.removeEntity(entity);
+            chunkMap.addEntity(entity);
+
             if (vehicleToPlayerMap.containsKey(oldUUID)) {
                 VehicleSyncData data = vehicleToPlayerMap.get(oldUUID);
                 data.vehicleId = entity.getId();
-                data.vehicleUUID = entity.getUUID();
-                data.vehicleGoalPos = entity.position();
+                data.vehicleGoalPos = pos;
                 data.playerTag.putUUID("vehicle", newUUID);
-                //data.player.startRiding(entity);
+                tryMount(level, data);
             }
 
             return entity;
         }).orElse(null);
     }
 
+    public static void tryMount(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
+        level.getServer().execute(() -> {
+            if (level.getEntity(data.playerId) instanceof ServerPlayer player) {
+                new ToClientSyncVehiclePos(data).sendTo(player);
+            }
+        });
+
+    }
+
+    public void handleSyncVehicleReturn(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
+        Entity player = level.getEntity(data.playerId);
+        Entity vehicle = level.getEntity(data.vehicleId);
+        if (player == null || vehicle == null) return;
+        player.startRiding(vehicle, true);
+    }
+
     public static class VehicleSyncData {
-        private VehicleSyncData() {};
         public int playerId;
-        public UUID playerUUID;
         public Vec3 playerGoalPos;
         public CompoundTag playerTag;
-        public boolean playerMoved = false;
         public int vehicleId;
-        public UUID vehicleUUID;
         public Vec3 vehicleGoalPos;
-        public boolean vehicleMoved = false;
+        public void read(FriendlyByteBuf buffer) {
+            playerId = buffer.readInt();
+            vehicleId = buffer.readInt();
+            playerGoalPos = new Vec3(buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
+            vehicleGoalPos = new Vec3(buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
+        }
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeInt(playerId);
+            buffer.writeInt(vehicleId);
+            buffer.writeFloat((float)playerGoalPos.x);
+            buffer.writeFloat((float)playerGoalPos.y);
+            buffer.writeFloat((float)playerGoalPos.z);
+            buffer.writeFloat((float)vehicleGoalPos.x);
+            buffer.writeFloat((float)vehicleGoalPos.y);
+            buffer.writeFloat((float)vehicleGoalPos.z);
+        }
     }
 
     private static Vec3 teleportToTagPos(@NotNull Entity entity, @NotNull CompoundTag entityTag,

@@ -6,10 +6,12 @@ import com.onewhohears.tacview.TVDependencySafety;
 import com.onewhohears.tacview.client.input.TVKeyBinds;
 import com.onewhohears.tacview.client.overlay.PlaybackInfoOverlay;
 import com.onewhohears.tacview.common.command.TacViewCommands;
+import com.onewhohears.tacview.common.core.SaveStateManager;
 import com.onewhohears.tacview.common.core.SessionManager;
 import com.onewhohears.tacview.common.core.SessionState;
 import com.onewhohears.tacview.common.entity.TacViewEntity;
 import com.onewhohears.tacview.common.network.toserver.ToServerRequestSession;
+import com.onewhohears.tacview.common.network.toserver.ToServerSyncVehiclePos;
 import com.onewhohears.tacview.common.network.toserver.ToServerUpdateViewer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -18,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +35,7 @@ public class TVClientManager {
     public boolean CLEARED_DH_CACHE = false;
 
     private final Map<String, RequestedSessionData> requestedSessions = new HashMap<>();
+    private final List<SaveStateManager.VehicleSyncData> vehicleSyncDataList = new ArrayList<>();
 
     @Nullable
     private TacViewEntity nearestViewer = null;
@@ -46,6 +50,7 @@ public class TVClientManager {
             TVDependencySafety.clearDHCache();
             CLEARED_DH_CACHE = true;
         }
+        handleVehicleSyncList();
     }
 
     protected void handleInputs() {
@@ -152,6 +157,31 @@ public class TVClientManager {
         reqData.updateState(sessionState);
         if (sessionState == SessionState.COMPLETE) {
             SessionManager.get().readSessionDataFromServer(sessionData);
+        }
+    }
+
+    public void handleSyncVehiclePos(@NotNull SaveStateManager.VehicleSyncData data) {
+        vehicleSyncDataList.add(data);
+    }
+
+    protected void handleVehicleSyncList() {
+        Minecraft m = Minecraft.getInstance();
+        if (m.level == null || m.player == null) return;
+        for (int i = 0; i < vehicleSyncDataList.size(); ++i) {
+            SaveStateManager.VehicleSyncData data = vehicleSyncDataList.get(i);
+            if (data.playerId != m.player.getId()) {
+                vehicleSyncDataList.remove(i--);
+                continue;
+            }
+            Entity vehicle = m.level.getEntity(data.vehicleId);
+            if (vehicle == null) {
+                vehicleSyncDataList.remove(i--);
+                continue;
+            }
+            if (vehicle.position().distanceToSqr(data.vehicleGoalPos) < 0.01) {
+                new ToServerSyncVehiclePos(data).sendToServer();
+                vehicleSyncDataList.remove(i--);
+            }
         }
     }
 
