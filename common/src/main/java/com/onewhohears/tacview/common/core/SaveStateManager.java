@@ -134,7 +134,6 @@ public class SaveStateManager {
                 new ToClientSyncVehiclePos(data).sendTo(player);
             }
         });
-
     }
 
     public void handleSyncVehicleReturn(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
