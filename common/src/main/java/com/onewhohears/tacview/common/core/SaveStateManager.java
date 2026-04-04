@@ -2,13 +2,13 @@ package com.onewhohears.tacview.common.core;
 
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
+import com.onewhohears.tacview.common.event.TacviewEvents;
 import com.onewhohears.tacview.common.network.toclient.ToClientSyncVehiclePos;
 import com.onewhohears.tacview.util.UtilFile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ChunkMap;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -25,8 +25,6 @@ public class SaveStateManager {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     public static String SAVE_STATE_PATH = "tac_view/save_states/";
-
-    private final Set<UUID> killDuplicates = new HashSet<>();
 
     public boolean loadSaveState(@NotNull String id, @NotNull ServerLevel level,
                                  @NotNull Consumer<String> debug) {
@@ -111,7 +109,7 @@ public class SaveStateManager {
                 }
             }
 
-            //Vec3 pos = teleportToTagPos(entity, entityTag, level);
+            Vec3 pos = teleportToTagPos(entity, entityTag, level);
             ChunkMap chunkMap = level.getChunkSource().chunkMap;
             chunkMap.removeEntity(entity);
             chunkMap.addEntity(entity);
@@ -119,9 +117,9 @@ public class SaveStateManager {
             if (vehicleToPlayerMap.containsKey(oldUUID)) {
                 VehicleSyncData data = vehicleToPlayerMap.get(oldUUID);
                 data.vehicleId = entity.getId();
-                data.vehicleGoalPos = entity.position();
+                data.vehicleGoalPos = pos;
                 data.playerTag.putUUID("vehicle", newUUID);
-                tryMount(level, data);
+                handleSyncVehicleReturn(level, data);
             }
 
             return entity;
@@ -136,7 +134,7 @@ public class SaveStateManager {
         });
     }
 
-    public void handleSyncVehicleReturn(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
+    public static void handleSyncVehicleReturn(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
         Entity player = level.getEntity(data.playerId);
         Entity vehicle = level.getEntity(data.vehicleId);
         if (player == null || vehicle == null) return;
@@ -202,7 +200,9 @@ public class SaveStateManager {
                 playerTag.putString("id", "minecraft:player");
                 entity.saveWithoutId(playerTag);
                 playerList.add(playerTag);
-                Entity vehicle = entity.getVehicle();
+                if (!entity.isPassenger()) continue;
+                Entity vehicle = entity.getVehicle() == null ?
+                        TacviewEvents.getPlayerVehicleToSave(entity) : entity.getVehicle();
                 if (vehicle == null) continue;
                 playerTag.putUUID("vehicle", vehicle.getUUID());
             }
