@@ -201,8 +201,8 @@ public class SaveStateManager {
                 entity.saveWithoutId(playerTag);
                 playerList.add(playerTag);
                 if (!entity.isPassenger()) continue;
-                Entity vehicle = entity.getVehicle() == null ?
-                        TacviewEvents.getPlayerVehicleToSave(entity) : entity.getVehicle();
+                Entity vehicle = TacviewEvents.getPlayerVehicleToSave(entity);
+                if (vehicle == null) vehicle = entity.getVehicle();
                 if (vehicle == null) continue;
                 playerTag.putUUID("vehicle", vehicle.getUUID());
             }
