@@ -111,7 +111,7 @@ public class SaveStateManager {
                 }
             }
 
-            Vec3 pos = teleportToTagPos(entity, entityTag, level);
+            //Vec3 pos = teleportToTagPos(entity, entityTag, level);
             ChunkMap chunkMap = level.getChunkSource().chunkMap;
             chunkMap.removeEntity(entity);
             chunkMap.addEntity(entity);
@@ -119,7 +119,7 @@ public class SaveStateManager {
             if (vehicleToPlayerMap.containsKey(oldUUID)) {
                 VehicleSyncData data = vehicleToPlayerMap.get(oldUUID);
                 data.vehicleId = entity.getId();
-                data.vehicleGoalPos = pos;
+                data.vehicleGoalPos = entity.position();
                 data.playerTag.putUUID("vehicle", newUUID);
                 tryMount(level, data);
             }
