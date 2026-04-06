@@ -47,31 +47,33 @@ public class SaveStateManager {
             return false;
         }
         try {
-            Map<UUID, VehicleSyncData> vehicleToPlayerMap = new HashMap<>();
-            ListTag playerList = nbt.getList("players", 10);
-            for (int i = 0; i < playerList.size(); ++i) {
-                CompoundTag playerTag = playerList.getCompound(i);
-                UUID playerUUID = playerTag.getUUID("UUID");
-                Entity player = level.getEntity(playerUUID);
-                if (player == null) continue;
-                player.load(playerTag);
-                player.stopRiding();
-                Vec3 pos = teleportToTagPos(player, playerTag, level);
-                if (playerTag.contains("vehicle")) {
-                    UUID vehicleUUID = playerTag.getUUID("vehicle");
-                    VehicleSyncData data = new VehicleSyncData();
-                    data.playerId = player.getId();
-                    data.playerGoalPos = pos;
-                    data.playerTag = playerTag;
-                    vehicleToPlayerMap.put(vehicleUUID, data);
+            level.getServer().execute(() -> {
+                Map<UUID, VehicleSyncData> vehicleToPlayerMap = new HashMap<>();
+                ListTag playerList = nbt.getList("players", 10);
+                for (int i = 0; i < playerList.size(); ++i) {
+                    CompoundTag playerTag = playerList.getCompound(i);
+                    UUID playerUUID = playerTag.getUUID("UUID");
+                    Entity player = level.getEntity(playerUUID);
+                    if (player == null) continue;
+                    player.load(playerTag);
+                    player.stopRiding();
+                    Vec3 pos = teleportToTagPos(player, playerTag, level);
+                    if (playerTag.contains("vehicle")) {
+                        UUID vehicleUUID = playerTag.getUUID("vehicle");
+                        VehicleSyncData data = new VehicleSyncData();
+                        data.playerId = player.getId();
+                        data.playerGoalPos = pos;
+                        data.playerTag = playerTag;
+                        vehicleToPlayerMap.put(vehicleUUID, data);
+                    }
                 }
-            }
-            ListTag entityList = nbt.getList("entities", 10);
-            for (int i = 0; i < entityList.size(); ++i) {
-                CompoundTag entityTag = entityList.getCompound(i);
-                loadEntityRecursive(entityTag, level, vehicleToPlayerMap);
-            }
-            UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
+                ListTag entityList = nbt.getList("entities", 10);
+                for (int i = 0; i < entityList.size(); ++i) {
+                    CompoundTag entityTag = entityList.getCompound(i);
+                    loadEntityRecursive(entityTag, level, vehicleToPlayerMap);
+                }
+                UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
+            });
         } catch (Exception e) {
             debug.accept("Failed to load Save State "+id+" because "+e.getMessage());
             e.printStackTrace();
