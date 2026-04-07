@@ -70,7 +70,7 @@ public class SaveStateManager {
                 ListTag entityList = nbt.getList("entities", 10);
                 for (int i = 0; i < entityList.size(); ++i) {
                     CompoundTag entityTag = entityList.getCompound(i);
-                    loadEntityRecursive(entityTag, level, vehicleToPlayerMap);
+                    loadEntityRecursive(entityTag, level, vehicleToPlayerMap, true);
                 }
                 UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
             });
@@ -85,7 +85,7 @@ public class SaveStateManager {
 
     @Nullable
     public static Entity loadEntityRecursive(CompoundTag entityTag, ServerLevel level,
-                                             Map<UUID, VehicleSyncData> vehicleToPlayerMap) {
+                                             Map<UUID, VehicleSyncData> vehicleToPlayerMap, boolean root) {
         return EntityType.loadStaticEntity(entityTag, level).map(entity -> {
             UUID oldUUID = entity.getUUID();
             UUID newUUID = oldUUID;
@@ -98,13 +98,13 @@ public class SaveStateManager {
             } else {
                 entity = entityOld;
                 entity.load(entityTag);
-                entity.stopRiding();
+                if (root) entity.stopRiding();
             }
 
             if (entityTag.contains("Passengers", 9)) {
                 ListTag listTag = entityTag.getList("Passengers", 10);
                 for(int i = 0; i < listTag.size(); ++i) {
-                    Entity entity2 = loadEntityRecursive(listTag.getCompound(i), level, vehicleToPlayerMap);
+                    Entity entity2 = loadEntityRecursive(listTag.getCompound(i), level, vehicleToPlayerMap, false);
                     if (entity2 != null) {
                         entity2.startRiding(entity, true);
                     }
