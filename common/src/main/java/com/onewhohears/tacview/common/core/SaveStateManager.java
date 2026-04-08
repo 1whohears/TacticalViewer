@@ -121,7 +121,7 @@ public class SaveStateManager {
                 data.vehicleId = entity.getId();
                 data.vehicleGoalPos = pos;
                 data.playerTag.putUUID("vehicle", newUUID);
-                tryMount(level, data);
+                handleSyncVehicleReturn(level, data);
             }
 
             return entity;
