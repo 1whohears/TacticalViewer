@@ -100,13 +100,13 @@ public class SaveStateManager {
             UUID oldUUID = entity.getUUID();
             UUID newUUID = oldUUID;
             Entity entityOld = level.getEntity(oldUUID);
-            LOGGER.info("LOADING root {} old {} new {}", root, entityOld, entity);
+            //LOGGER.info("LOADING root {} old {} new {}", root, entityOld, entity);
             if (entityOld == null || entityOld.isRemoved()) {
                 newUUID = UUID.randomUUID();
                 entity.setUUID(newUUID);
                 entityTag.putUUID("UUID", newUUID);
                 level.addFreshEntity(entity);
-                LOGGER.info("created new entity exists? {}", level.getEntity(entity.getId()));
+                //LOGGER.info("created new entity exists? {}", level.getEntity(entity.getId()));
             } else {
                 entity = entityOld;
                 entity.load(entityTag);
@@ -126,7 +126,7 @@ public class SaveStateManager {
             }
 
             if (entityTag.contains("Passengers", 9)) {
-                LOGGER.info("PASSENGERS PRE {}", entity.getPassengers());
+                //LOGGER.info("PASSENGERS PRE {}", entity.getPassengers());
                 ListTag listTag = entityTag.getList("Passengers", 10);
                 for(int i = 0; i < listTag.size(); ++i) {
                     Entity entity2 = loadEntityRecursive(listTag.getCompound(i), level, vehicleToPlayerMap, false);
@@ -134,7 +134,7 @@ public class SaveStateManager {
                         entity2.startRiding(entity, true);
                     }
                 }
-                LOGGER.info("PASSENGERS POST {}", entity.getPassengers());
+                //LOGGER.info("PASSENGERS POST {}", entity.getPassengers());
             }
 
             return entity;
@@ -152,16 +152,16 @@ public class SaveStateManager {
     public static void handleSyncVehicleReturn(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
         Entity player = level.getEntity(data.playerId);
         if (player == null) {
-            LOGGER.info("NO PLAYER ID {}", data.playerId);
+            //LOGGER.info("NO PLAYER ID {}", data.playerId);
             return;
         }
         Entity vehicle = level.getEntity(data.vehicleId);
         if (vehicle == null) {
-            LOGGER.info("NO VEHICLE ID {}", data.vehicleId);
+            //LOGGER.info("NO VEHICLE ID {}", data.vehicleId);
             return;
         }
         player.startRiding(vehicle, true);
-        LOGGER.info("PLAYER {} RIDING {}", player, vehicle);
+        //LOGGER.info("PLAYER {} RIDING {}", player, vehicle);
     }
 
     public void addTimedFutureRunnable(@NotNull ServerLevel level, int ticks,
