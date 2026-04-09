@@ -93,7 +93,8 @@ public class SaveStateManager {
             UUID oldUUID = entity.getUUID();
             UUID newUUID = oldUUID;
             Entity entityOld = level.getEntity(oldUUID);
-            if (root && entityOld != null) {
+            if (!root && entityOld != null) {
+                entityOld.stopRiding();
                 entityOld.discard();
             }
             if (entityOld == null || entityOld.isRemoved()) {
