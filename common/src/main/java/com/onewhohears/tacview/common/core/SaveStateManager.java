@@ -73,6 +73,9 @@ public class SaveStateManager {
                     loadEntityRecursive(entityTag, level, vehicleToPlayerMap, true);
                 }
                 UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
+                vehicleToPlayerMap.forEach((uuid, data) -> {
+                    handleSyncVehicleReturn(level, data);
+                });
             });
         } catch (Exception e) {
             debug.accept("Failed to load Save State "+id+" because "+e.getMessage());
@@ -111,7 +114,6 @@ public class SaveStateManager {
                 data.vehicleId = entity.getId();
                 data.vehicleGoalPos = pos;
                 data.playerTag.putUUID("vehicle", newUUID);
-                handleSyncVehicleReturn(level, data);
             }
 
             if (entityTag.contains("Passengers", 9)) {
