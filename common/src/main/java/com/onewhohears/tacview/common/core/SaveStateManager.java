@@ -72,7 +72,7 @@ public class SaveStateManager {
                         vehicleToPlayerMap.put(vehicleUUID, data);
                     }
                 }
-                addTimedFutureRunnable(level, 1, lvl -> {
+                addTimedFutureRunnable(level, 10, lvl -> {
                     ListTag entityList = nbt.getList("entities", 10);
                     for (int i = 0; i < entityList.size(); ++i) {
                         CompoundTag entityTag = entityList.getCompound(i);
