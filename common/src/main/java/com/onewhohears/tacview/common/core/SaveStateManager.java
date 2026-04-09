@@ -93,10 +93,11 @@ public class SaveStateManager {
             UUID oldUUID = entity.getUUID();
             UUID newUUID = oldUUID;
             Entity entityOld = level.getEntity(oldUUID);
-            if (!root && entityOld != null) {
+            /*if (!root && entityOld != null) {
                 entityOld.stopRiding();
                 entityOld.discard();
-            }
+            }*/
+            LOGGER.info("LOADING root {} new {} old {}", root, entity, entityOld);
             if (entityOld == null || entityOld.isRemoved()) {
                 newUUID = UUID.randomUUID();
                 entity.setUUID(newUUID);
@@ -121,6 +122,7 @@ public class SaveStateManager {
             }
 
             if (entityTag.contains("Passengers", 9)) {
+                LOGGER.info("PASSENGERS PRE {}", entity.getPassengers());
                 ListTag listTag = entityTag.getList("Passengers", 10);
                 for(int i = 0; i < listTag.size(); ++i) {
                     Entity entity2 = loadEntityRecursive(listTag.getCompound(i), level, vehicleToPlayerMap, false);
@@ -128,6 +130,7 @@ public class SaveStateManager {
                         entity2.startRiding(entity, true);
                     }
                 }
+                LOGGER.info("PASSENGERS POST {}", entity.getPassengers());
             }
 
             return entity;
@@ -147,6 +150,7 @@ public class SaveStateManager {
         Entity vehicle = level.getEntity(data.vehicleId);
         if (player == null || vehicle == null) return;
         player.startRiding(vehicle, true);
+        LOGGER.info("PLAYER {} RIDING {}", player, vehicle);
     }
 
     public static class VehicleSyncData {
