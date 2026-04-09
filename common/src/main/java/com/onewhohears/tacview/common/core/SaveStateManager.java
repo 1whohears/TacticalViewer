@@ -101,16 +101,6 @@ public class SaveStateManager {
                 if (root) entity.stopRiding();
             }
 
-            if (entityTag.contains("Passengers", 9)) {
-                ListTag listTag = entityTag.getList("Passengers", 10);
-                for(int i = 0; i < listTag.size(); ++i) {
-                    Entity entity2 = loadEntityRecursive(listTag.getCompound(i), level, vehicleToPlayerMap, false);
-                    if (entity2 != null) {
-                        entity2.startRiding(entity, true);
-                    }
-                }
-            }
-
             Vec3 pos = teleportToTagPos(entity, entityTag, level);
             ChunkMap chunkMap = level.getChunkSource().chunkMap;
             chunkMap.removeEntity(entity);
@@ -122,6 +112,16 @@ public class SaveStateManager {
                 data.vehicleGoalPos = pos;
                 data.playerTag.putUUID("vehicle", newUUID);
                 handleSyncVehicleReturn(level, data);
+            }
+
+            if (entityTag.contains("Passengers", 9)) {
+                ListTag listTag = entityTag.getList("Passengers", 10);
+                for(int i = 0; i < listTag.size(); ++i) {
+                    Entity entity2 = loadEntityRecursive(listTag.getCompound(i), level, vehicleToPlayerMap, false);
+                    if (entity2 != null) {
+                        entity2.startRiding(entity, true);
+                    }
+                }
             }
 
             return entity;
