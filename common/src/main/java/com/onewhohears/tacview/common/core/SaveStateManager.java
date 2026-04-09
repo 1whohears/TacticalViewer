@@ -97,12 +97,13 @@ public class SaveStateManager {
                 entityOld.stopRiding();
                 entityOld.discard();
             }*/
-            LOGGER.info("LOADING root {} new {} old {}", root, entity, entityOld);
+            LOGGER.info("LOADING root {} old {} new {}", root, entityOld, entity);
             if (entityOld == null || entityOld.isRemoved()) {
                 newUUID = UUID.randomUUID();
                 entity.setUUID(newUUID);
                 entityTag.putUUID("UUID", newUUID);
                 level.addFreshEntity(entity);
+                LOGGER.info("created new entity exists? {}", level.getEntity(entity.getId()));
             } else {
                 entity = entityOld;
                 entity.load(entityTag);
@@ -147,8 +148,15 @@ public class SaveStateManager {
 
     public static void handleSyncVehicleReturn(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
         Entity player = level.getEntity(data.playerId);
+        if (player == null) {
+            LOGGER.info("NO PLAYER ID {}", data.playerId);
+            return;
+        }
         Entity vehicle = level.getEntity(data.vehicleId);
-        if (player == null || vehicle == null) return;
+        if (vehicle == null) {
+            LOGGER.info("NO VEHICLE ID {}", data.vehicleId);
+            return;
+        }
         player.startRiding(vehicle, true);
         LOGGER.info("PLAYER {} RIDING {}", player, vehicle);
     }
