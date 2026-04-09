@@ -1,5 +1,6 @@
 package com.onewhohears.tacview.common.core;
 
+import com.ibm.icu.impl.Pair;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.tacview.common.event.TacviewEvents;
@@ -8,11 +9,13 @@ import com.onewhohears.tacview.util.UtilFile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +28,8 @@ public class SaveStateManager {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     public static String SAVE_STATE_PATH = "tac_view/save_states/";
+
+    private Map<ResourceKey<Level>,List<Pair<CanServerLevelRun,ServerLevelRunnable>>> futureRuns = new HashMap<>();
 
     public boolean loadSaveState(@NotNull String id, @NotNull ServerLevel level,
                                  @NotNull Consumer<String> debug) {
@@ -67,14 +72,16 @@ public class SaveStateManager {
                         vehicleToPlayerMap.put(vehicleUUID, data);
                     }
                 }
-                ListTag entityList = nbt.getList("entities", 10);
-                for (int i = 0; i < entityList.size(); ++i) {
-                    CompoundTag entityTag = entityList.getCompound(i);
-                    loadEntityRecursive(entityTag, level, vehicleToPlayerMap, true);
-                }
-                UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
-                vehicleToPlayerMap.forEach((uuid, data) -> {
-                    handleSyncVehicleReturn(level, data);
+                addTimedFutureRunnable(level, 10, lvl -> {
+                    ListTag entityList = nbt.getList("entities", 10);
+                    for (int i = 0; i < entityList.size(); ++i) {
+                        CompoundTag entityTag = entityList.getCompound(i);
+                        loadEntityRecursive(entityTag, lvl, vehicleToPlayerMap, true);
+                    }
+                    UtilFile.writeNbtInGamePath(getSaveStateFileName(id), nbt);
+                    vehicleToPlayerMap.forEach((uuid, data) -> {
+                        handleSyncVehicleReturn(lvl, data);
+                    });
                 });
             });
         } catch (Exception e) {
@@ -159,6 +166,38 @@ public class SaveStateManager {
         }
         player.startRiding(vehicle, true);
         LOGGER.info("PLAYER {} RIDING {}", player, vehicle);
+    }
+
+    public void addTimedFutureRunnable(@NotNull ServerLevel level, int ticks,
+                                       @NotNull ServerLevelRunnable run) {
+        long goalTime = level.getGameTime() + ticks;
+        addFutureRunnable(level, lev -> lev.getGameTime() >= goalTime, run);
+    }
+
+    public void addFutureRunnable(@NotNull ServerLevel level, @NotNull CanServerLevelRun test,
+                                  @NotNull ServerLevelRunnable run) {
+        List<Pair<CanServerLevelRun, ServerLevelRunnable>> runs = futureRuns.computeIfAbsent(
+                level.dimension(), k -> new ArrayList<>());
+        runs.add(Pair.of(test, run));
+    }
+
+    public void tick(@NotNull ServerLevel level) {
+        List<Pair<CanServerLevelRun,ServerLevelRunnable>> runs = futureRuns.get(level.dimension());
+        if (runs == null) return;
+        for (int i = 0; i < runs.size(); ++i) {
+            if (runs.get(i).first.test(level)) {
+                runs.get(i).second.run(level);
+                runs.remove(i--);
+            }
+        }
+    }
+
+    public interface CanServerLevelRun {
+        boolean test(@NotNull ServerLevel level);
+    }
+
+    public interface ServerLevelRunnable {
+        void run(@NotNull ServerLevel level);
     }
 
     public static class VehicleSyncData {

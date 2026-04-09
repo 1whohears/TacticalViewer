@@ -2,6 +2,7 @@ package com.onewhohears.tacview.common.event;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.onewhohears.tacview.common.command.TacViewCommands;
+import com.onewhohears.tacview.common.core.SaveStateManager;
 import com.onewhohears.tacview.common.core.SessionManager;
 import com.onewhohears.tacview.common.core.recordevent.MoreRecordEvents;
 import com.onewhohears.tacview.common.network.TVPacketHandler;
@@ -53,6 +54,7 @@ public class TVCommonEventHandlers {
 
     private static void onServerLevelPost(ServerLevel level) {
         SessionManager.get().tickRecord(level);
+        SaveStateManager.get().tick(level);
     }
 
 }
