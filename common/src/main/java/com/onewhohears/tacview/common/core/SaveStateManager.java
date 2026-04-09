@@ -72,7 +72,7 @@ public class SaveStateManager {
                         vehicleToPlayerMap.put(vehicleUUID, data);
                     }
                 }
-                addTimedFutureRunnable(level, 10, lvl -> {
+                addTimedFutureRunnable(level, 1, lvl -> {
                     ListTag entityList = nbt.getList("entities", 10);
                     for (int i = 0; i < entityList.size(); ++i) {
                         CompoundTag entityTag = entityList.getCompound(i);
@@ -100,10 +100,6 @@ public class SaveStateManager {
             UUID oldUUID = entity.getUUID();
             UUID newUUID = oldUUID;
             Entity entityOld = level.getEntity(oldUUID);
-            /*if (!root && entityOld != null) {
-                entityOld.stopRiding();
-                entityOld.discard();
-            }*/
             LOGGER.info("LOADING root {} old {} new {}", root, entityOld, entity);
             if (entityOld == null || entityOld.isRemoved()) {
                 newUUID = UUID.randomUUID();
