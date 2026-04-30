@@ -21,8 +21,8 @@ public final class TacViewMod {
         RecordEvents.registerDefaultEventReaders();
         TVModEntities.register();
         EntityKeyframe.addDefaultVisibleValues();
-        TVKeyBinds.init();
         if (Platform.getEnvironment() == Env.CLIENT) {
+            TVKeyBinds.init();
             TVClientEventHandlers.init();
         }
         isDHLoaded = Platform.isModLoaded("distanthorizons");
