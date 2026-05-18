@@ -1,6 +1,6 @@
 package com.onewhohears.tacview.common.core;
 
-import com.ibm.icu.impl.Pair;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.logging.LogUtils;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.tacview.common.event.TacviewEvents;
@@ -29,7 +29,7 @@ public class SaveStateManager {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static String SAVE_STATE_PATH = "tac_view/save_states/";
 
-    private Map<ResourceKey<Level>,List<Pair<CanServerLevelRun,ServerLevelRunnable>>> futureRuns = new HashMap<>();
+    private final Map<ResourceKey<Level>,List<Pair<CanServerLevelRun,ServerLevelRunnable>>> futureRuns = new HashMap<>();
 
     public boolean loadSaveState(@NotNull String id, @NotNull ServerLevel level,
                                  @NotNull Consumer<String> debug) {
@@ -181,8 +181,8 @@ public class SaveStateManager {
         List<Pair<CanServerLevelRun,ServerLevelRunnable>> runs = futureRuns.get(level.dimension());
         if (runs == null) return;
         for (int i = 0; i < runs.size(); ++i) {
-            if (runs.get(i).first.test(level)) {
-                runs.get(i).second.run(level);
+            if (runs.get(i).getFirst().test(level)) {
+                runs.get(i).getSecond().run(level);
                 runs.remove(i--);
             }
         }

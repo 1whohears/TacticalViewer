@@ -1,8 +1,8 @@
 package com.onewhohears.tacview.common.core;
 
+import com.mojang.datafixers.util.Pair;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.ibm.icu.impl.Pair;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.onewhohears.onewholibs.util.UtilEntity;
 import com.onewhohears.onewholibs.util.UtilMCText;
@@ -40,7 +40,7 @@ public abstract class EntityRecorder<K extends EntityKeyframe<E>, E extends Enti
 
     public K interpolate(long gameTime, float partialTick) {
         Pair<K,K> surround = findSurroundingKeyframes(gameTime);
-        return interpolate(surround.first, surround.second, gameTime, partialTick);
+        return interpolate(surround.getFirst(), surround.getSecond(), gameTime, partialTick);
     }
 
     public Pair<K,K> findSurroundingKeyframes(long gameTime) {
