@@ -96,7 +96,7 @@ public class SaveStateManager {
     @Nullable
     public static Entity loadEntityRecursive(CompoundTag entityTag, ServerLevel level,
                                              Map<UUID, VehicleSyncData> vehicleToPlayerMap, boolean root) {
-        return EntityType.loadStaticEntity(entityTag, level).map(entity -> {
+        return loadStaticEntity(entityTag, level).map(entity -> {
             UUID oldUUID = entity.getUUID();
             UUID newUUID = oldUUID;
             Entity entityOld = level.getEntity(oldUUID);
@@ -139,6 +139,15 @@ public class SaveStateManager {
 
             return entity;
         }).orElse(null);
+    }
+
+    public static Optional<Entity> loadStaticEntity(CompoundTag compoundTag, Level level) {
+        try {
+            return EntityType.create(compoundTag, level);
+        } catch (RuntimeException runtimeException) {
+            LOGGER.warn("Exception loading entity: ", runtimeException);
+            return Optional.empty();
+        }
     }
 
     public static void tryMount(@NotNull ServerLevel level, @NotNull VehicleSyncData data) {
