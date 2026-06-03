@@ -31,7 +31,7 @@ public class Config {
                             " Increase this value if you want height maps to generate faster" +
                             " and you think your PC can handle it." +
                             " Decrease this value if generating height maps is causing bad lag spikes.")
-                    .defineInRange("heightMapMaxGenTilesPerTick", 64, 1, Integer.MAX_VALUE);
+                    .defineInRange("heightMapMaxGenTilesPerTick", 4, 1, Integer.MAX_VALUE);
             heightMapMeshUpdateRate = builder.comment("How often in seconds will the distant horizons heightmap" +
                             " in a replay viewer visually refresh.")
                     .defineInRange("heightMapMeshUpdateRate", 2, 1, Integer.MAX_VALUE);
