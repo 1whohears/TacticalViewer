@@ -1,0 +1,9 @@
+{
+  "key.categories.tacview": "Tactical Viewer",
+  "key.tacview.backward_ten": "Backward 10s",
+  "key.tacview.forward_ten": "Forward 10s",
+  "key.tacview.backward_tick": "Backward Tick",
+  "key.tacview.forward_tick": "Forward Tick",
+  "key.tacview.pause": "Pause",
+  "key.tacview.toggle_track": "Toggle Track"
+}
